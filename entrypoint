@@ -5,7 +5,7 @@ set -x
 main() {
     local pagesize
     pagesize="$(python3 -c "import resource; print(resource.getpagesize());")"
-    export OS_PAGESIZE=$pagesize
+    export NGINX_OS_PAGESIZE=$pagesize
 
     sed -i 's#access_log /var/log/nginx/access.log;#access_log /dev/stdout;#' /etc/nginx/nginx.conf
     sed -i 's#error_log /var/log/nginx/error.log;#error_log stderr;#' /etc/nginx/nginx.conf

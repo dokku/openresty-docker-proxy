@@ -8,7 +8,8 @@
 {{ range $processType, $containers := groupByLabel $appContainers $process_label }}
 {{ $first_container := index $containers 0 }}
 {{ $initial_network := when (contains $first_container.Labels "nginx.initial-network") (index $first_container.Labels "nginx.initial-network") "bridge" }}
-{{ range $_, $port_map := split (index $first_container.Env "DOKKU_PROXY_PORT_MAP" | trim) " "  }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
+{{ range $_, $port_map := $port_mappings  }}
 {{ $container_port := index (split $port_map ":") 2 }}
 
 {{ $upstream_name := printf "%s-%s-%s" $app $processType $container_port }}
@@ -47,7 +48,7 @@ upstream {{ $app }}-{{ $processType }}-{{ $container_port }} {
 {{ $nginx_domains := when (contains $first_container.Labels "nginx.domains") (index $first_container.Labels "nginx.domains") $app }}
 {{ $nginx_https_port := when (contains $first_container.Labels "nginx.https-port") (index $first_container.Labels "nginx.https-port") "443" }}
 
-{{ $port_mappings := split (index $first_container.Env "DOKKU_PROXY_PORT_MAP" | trim) " " }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
 {{ $host_port := index (split $port_map ":") 1 }}
