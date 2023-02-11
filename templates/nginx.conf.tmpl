@@ -85,7 +85,7 @@ server {
         auth_basic off;
         auth_request off;
         allow all;
-        root /etc/nginx/acme-challenge;
+        root /etc/nginx/acme-challenge/{{ $app }};
         try_files $uri =404;
         break;
     }
