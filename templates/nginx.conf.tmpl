@@ -71,26 +71,21 @@ server {
     keepalive_timeout           70;
     {{ end }}
 
+    {{ range $label, $base64Value := $first_container.Labels }}
+    {{ if hasPrefix "nginx.include-" $label }}
+    # {{ $label }}
+{{ indent 4 (b64dec $base64Value) }}
+    {{ end }}
+    {{ end }}
+
     {{ if or (eq $scheme "grpc") (eq $scheme "grpcs")}}
     location    / {
         grpc_pass  grpc://{{ $app }}-{{ $container_port }};
     }
     {{ if $nginx_client_max_body_size }}client_max_body_size {{ $nginx_client_max_body_size }};{{ end }}
-    {{ range $label, $base64Value := $first_container.Labels }}
-    {{ if hasPrefix "nginx.include-" $label }}
-    # {{ $label }}
-    {{ b64dec $base64Value }}
-    {{ end }}
-    {{ end }}
 
     {{ else if and (eq $host_port "80") (has (printf "https:%s:%s" $nginx_https_port $container_port) $port_mappings) ($has_cert) }}
 
-    {{ range $label, $base64Value := $first_container.Labels }}
-    {{ if hasPrefix "nginx.include-" $label }}
-    # {{ $label }}
-    {{ b64dec $base64Value }}
-    {{ end }}
-    {{ end }}
     location / {
         return 301 https://$host:{{ $nginx_https_port }}$request_uri;
     }
@@ -150,12 +145,6 @@ server {
         root /etc/nginx/errors;
         internal;
     }
-    {{ range $label, $base64Value := $first_container.Labels }}
-    {{ if hasPrefix "nginx.include-" $label }}
-    # {{ $label }}
-    {{ b64dec $base64Value }}
-    {{ end }}
-    {{ end }}
 
     {{ end }}
 }
