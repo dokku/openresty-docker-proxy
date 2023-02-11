@@ -8,7 +8,7 @@
 {{ $first_container := index $web_containers 0 }}
 {{ $nginx_domains := when (contains $first_container.Labels "nginx.domains") (index $first_container.Labels "nginx.domains") $app }}
 {{ $nginx_http_port := when (contains $first_container.Labels "nginx.http-port") (index $first_container.Labels "nginx.http-port") "443" }}
-{{ $port_mappings := split (index $first_container.Env "DOKKU_PROXY_PORT_MAP" | trim) " " }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
 
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
