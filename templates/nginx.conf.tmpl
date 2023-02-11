@@ -1,0 +1,163 @@
+{{ $upstreams := dict }}
+{{ $app_label := env "NGINX_APP_LABEL" }}
+{{ $process_label := env "NGINX_PROCESS_LABEL" }}
+{{ $web_process := env "NGINX_WEB_PROCESS" }}
+{{ $default_network := env "NGINX_DEFAULT_NETWORK" }}
+{{ range $app, $appContainers := groupByLabel $ $app_label }}
+
+{{ range $processType, $containers := groupByLabel $appContainers $process_label }}
+{{ $first_container := index $containers 0 }}
+{{ $initial_network := when (contains $first_container.Labels "nginx.initial-network") (index $first_container.Labels "nginx.initial-network") "bridge" }}
+{{ range $_, $port_map := split (index $first_container.Env "DOKKU_PROXY_PORT_MAP" | trim) " "  }}
+{{ $container_port := index (split $port_map ":") 2 }}
+
+{{ $upstream_name := printf "%s-%s-%s" $app $processType $container_port }}
+{{ if not (contains $upstreams $upstream_name) }}
+{{ $_ := set $upstreams $upstream_name true }}
+upstream {{ $app }}-{{ $processType }}-{{ $container_port }} {
+{{ range $_, $container := $containers }}
+{{ range $_, $network := $container.Networks }}
+{{ if eq $network.Name $initial_network }}
+    server {{ $container.IP }}:{{ $container_port }}; # network={{ $network.Name }}
+{{ end }}
+{{ end }}
+{{ end }}
+}
+{{ end }}
+{{ end }}
+{{ end }}
+
+{{ $web_containers := whereLabelValueMatches (whereLabelValueMatches $ $app_label $app) $process_label $web_process }}
+{{ $first_container := index $web_containers 0 }}
+{{ $nginx_bind_address_ipv4 := when (contains $first_container.Labels "nginx.bind-address-ipv4") (index $first_container.Labels "nginx.bind-address-ipv4") "" }}
+{{ $nginx_bind_address_ipv6 := when (contains $first_container.Labels "nginx.bind-address-ipv6") (index $first_container.Labels "nginx.bind-address-ipv6") "[::]" }}
+{{ $nginx_proxy_read_timeout := when (contains $first_container.Labels "nginx.proxy-read-timeout") (index $first_container.Labels "nginx.proxy-read-timeout") "60s" }}
+{{ $nginx_proxy_buffering := when (contains $first_container.Labels "nginx.proxy-buffering") (index $first_container.Labels "nginx.proxy-buffering") "on" }}
+{{ $nginx_proxy_buffer_size := when (contains $first_container.Labels "nginx.proxy-buffer-size") (index $first_container.Labels "nginx.proxy-buffer-size") (env "OS_PAGESIZE") }}
+{{ $nginx_proxy_buffers := when (contains $first_container.Labels "nginx.proxy-buffers") (index $first_container.Labels "nginx.proxy-buffers") (printf "8 %s" (env "OS_PAGESIZE")) }}
+{{ $nginx_proxy_busy_buffer_size := when (contains $first_container.Labels "nginx.proxy-busy-buffer-size") (index $first_container.Labels "nginx.proxy-busy-buffer-size") (mul 2 (atoi (env "OS_PAGESIZE"))) }}
+{{ $nginx_x_forwarded_for_value := when (contains $first_container.Labels "nginx.x-forwarded-for-value") (index $first_container.Labels "nginx.x-forwarded-for-value") "$remote_addr" }}
+{{ $nginx_x_forwarded_port_value := when (contains $first_container.Labels "nginx.x-forwarded-port-value") (index $first_container.Labels "nginx.x-forwarded-port-value") "$server_port" }}
+{{ $nginx_x_forwarded_proto_value := when (contains $first_container.Labels "nginx.x-forwarded-proto-value") (index $first_container.Labels "nginx.x-forwarded-proto-value") "$scheme" }}
+{{ $nginx_x_forwarded_ssl := when (contains $first_container.Labels "nginx.x-forwarded-proto-value") (index $first_container.Labels "nginx.x-forwarded-ssl") "" }}
+{{ $nginx_client_max_body_size := when (contains $first_container.Labels "nginx.client-max-body-size") (index $first_container.Labels "nginx.client-max-body-size") "" }}
+{{ $nginx_access_log_path := when (contains $first_container.Labels "nginx.access-log-path") (index $first_container.Labels "nginx.access-log-path") (printf "/var/log/nginx/%s-access.log" $app) }}
+{{ $nginx_access_log_format := when (contains $first_container.Labels "nginx.access-log-format") (index $first_container.Labels "nginx.access-log-format") "" }}
+{{ $nginx_error_log_path := when (contains $first_container.Labels "nginx.error-log-path") (index $first_container.Labels "nginx.error-log-path") (printf "/var/log/nginx/%s-error.log" $app) }}
+{{ $nginx_domains := when (contains $first_container.Labels "nginx.domains") (index $first_container.Labels "nginx.domains") $app }}
+{{ $nginx_https_port := when (contains $first_container.Labels "nginx.https-port") (index $first_container.Labels "nginx.https-port") "443" }}
+
+{{ $port_mappings := split (index $first_container.Env "DOKKU_PROXY_PORT_MAP" | trim) " " }}
+{{ range $_, $port_map := $port_mappings  }}
+{{ $scheme := index (split $port_map ":") 0 }}
+{{ $host_port := index (split $port_map ":") 1 }}
+{{ $container_port := index (split $port_map ":") 2 }}
+{{ $has_cert := exists (printf "/etc/nginx/ssl/%s-server.key" $app) }}
+server {
+    listen                      {{ if $nginx_bind_address_ipv4 }}{{ $nginx_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if and (eq $scheme "https") $has_cert }} ssl http2{{ end }};
+    listen                      {{ $nginx_bind_address_ipv6 }}:{{ $host_port }}{{ if and (eq $scheme "https") $has_cert }} ssl http2{{ end }};
+    {{ if $nginx_domains }}server_name                 {{ $nginx_domains }};{{ end }}
+    access_log                  {{ $nginx_access_log_path }}{{ if and ($nginx_access_log_format) (ne $nginx_access_log_path "off") }} {{ $nginx_access_log_format }}{{ end }};
+    error_log                   {{ $nginx_error_log_path }};
+
+    {{ if and (or (eq $scheme "grpcs") (eq $scheme "https")) ($has_cert) }}
+    ssl_certificate             /etc/nginx/ssl/{{ $app }}-server.crt;
+    ssl_certificate_key         /etc/nginx/ssl/{{ $app }}-server.key;
+    ssl_protocols               TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers   off;
+    {{ end }}
+
+    {{ if and (eq $scheme "https") ($has_cert) }}
+    keepalive_timeout           70;
+    {{ end }}
+
+    {{ if or (eq $scheme "grpc") (eq $scheme "grpcs")}}
+    location    / {
+        grpc_pass  grpc://{{ $app }}-{{ $container_port }};
+    }
+    {{ if $nginx_client_max_body_size }}client_max_body_size {{ $nginx_client_max_body_size }};{{ end }}
+    {{ range $label, $base64Value := $first_container.Labels }}
+    {{ if hasPrefix "nginx.include-" $label }}
+    # {{ $label }}
+    {{ b64dec $base64Value }}
+    {{ end }}
+    {{ end }}
+
+    {{ else if and (eq $host_port "80") (has (printf "https:%s:%s" $nginx_https_port $container_port) $port_mappings) ($has_cert) }}
+
+    {{ range $label, $base64Value := $first_container.Labels }}
+    {{ if hasPrefix "nginx.include-" $label }}
+    # {{ $label }}
+    {{ b64dec $base64Value }}
+    {{ end }}
+    {{ end }}
+    location / {
+        return 301 https://$host:{{ $nginx_https_port }}$request_uri;
+    }
+
+    {{ else }}
+    # Do not HTTPS redirect Let's Encrypt ACME challenge
+    location ^~ /.well-known/acme-challenge/ {
+        auth_basic off;
+        auth_request off;
+        allow all;
+        root /etc/nginx/acme-challenge;
+        try_files $uri =404;
+        break;
+    }
+
+    location / {
+        gzip                    on;
+        gzip_buffers            4 32k;
+        gzip_comp_level         6;
+        gzip_min_length         1100;
+        gzip_types              text/css text/javascript text/xml text/plain text/x-component application/javascript application/x-javascript application/json application/xml  application/rss+xml font/truetype application/x-font-ttf font/opentype application/vnd.ms-fontobject image/svg+xml;
+        gzip_vary               on;
+        proxy_buffer_size       {{ $nginx_proxy_buffer_size }};
+        proxy_buffering         {{ $nginx_proxy_buffering }};
+        proxy_buffers           {{ $nginx_proxy_buffers }};
+        proxy_busy_buffers_size {{ $nginx_proxy_busy_buffer_size }};
+        proxy_http_version      1.1;
+        proxy_pass              http://{{ $app }}-web-{{ $container_port }};
+        proxy_read_timeout      {{ $nginx_proxy_read_timeout }};
+        proxy_set_header        Connection $http_connection;
+        proxy_set_header        Host $http_host;
+        proxy_set_header        Upgrade $http_upgrade;
+        proxy_set_header        X-Forwarded-For {{ $nginx_x_forwarded_for_value }};
+        proxy_set_header        X-Forwarded-Port {{ $nginx_x_forwarded_port_value }};
+        proxy_set_header        X-Forwarded-Proto {{ $nginx_x_forwarded_proto_value }};
+        proxy_set_header        X-Request-Start $msec;
+        {{ if $nginx_x_forwarded_ssl }}proxy_set_header       X-Forwarded-Ssl {{ $nginx_x_forwarded_ssl }};{{ end }}
+        {{ if and (eq $scheme "https") ($has_cert) }}http2_push_preload      on; {{ end }}
+
+    }
+    {{ if $nginx_client_max_body_size }}client_max_body_size {{ $nginx_client_max_body_size }};{{ end }}
+
+    error_page 400 401 402 403 405 406 407 408 409 410 411 412 413 414 415 416 417 418 420 422 423 424 426 428 429 431 444 449 450 451 /400-error.html;
+    location /400-error.html {
+        root /etc/nginx/errors;
+        internal;
+    }
+
+    error_page 404 /404-error.html;
+    location /404-error.html {
+        root /etc/nginx/errors;
+        internal;
+    }
+
+    error_page 500 501 502 503 504 505 506 507 508 509 510 511 /500-error.html;
+    location /500-error.html {
+        root /etc/nginx/errors;
+        internal;
+    }
+    {{ range $label, $base64Value := $first_container.Labels }}
+    {{ if hasPrefix "nginx.include-" $label }}
+    # {{ $label }}
+    {{ b64dec $base64Value }}
+    {{ end }}
+    {{ end }}
+
+    {{ end }}
+}
+{{ end }}
+{{ end }}

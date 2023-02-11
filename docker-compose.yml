@@ -1,0 +1,23 @@
+---
+version: "3.7"
+
+services:
+  nginx:
+    build: .
+
+    network_mode: bridge
+
+    environment:
+      NGINX_APP_LABEL: com.dokku.app-name
+      NGINX_PROCESS_LABEL: com.dokku.process-type
+      NGINX_WEB_PROCESS: web
+      NGINX_NETWORK: bridge
+
+    ports:
+      - "8080:80"
+      - "8443:443"
+
+    restart: unless-stopped
+
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"

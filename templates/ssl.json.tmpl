@@ -1,0 +1,23 @@
+{{ $ssl_apps := dict }}
+{{ $app_label := env "NGINX_APP_LABEL" }}
+{{ $process_label := env "NGINX_PROCESS_LABEL" }}
+{{ $web_process := env "NGINX_WEB_PROCESS" }}
+
+{{ range $app, $appContainers := groupByLabel $ $app_label }}
+{{ $web_containers := whereLabelValueMatches (whereLabelValueMatches $ $app_label $app) $process_label $web_process }}
+{{ $first_container := index $web_containers 0 }}
+{{ $nginx_domains := when (contains $first_container.Labels "nginx.domains") (index $first_container.Labels "nginx.domains") $app }}
+{{ $nginx_http_port := when (contains $first_container.Labels "nginx.http-port") (index $first_container.Labels "nginx.http-port") "443" }}
+{{ $port_mappings := split (index $first_container.Env "DOKKU_PROXY_PORT_MAP" | trim) " " }}
+
+{{ range $_, $port_map := $port_mappings  }}
+{{ $scheme := index (split $port_map ":") 0 }}
+{{ $container_port := index (split $port_map ":") 2 }}
+{{ if and (eq $scheme "http") (has (printf "https:%s:%s" $nginx_http_port $container_port) $port_mappings) }}
+{{ $_ := set $ssl_apps $app $nginx_domains }}
+{{ end }}
+{{ end }}
+
+{{ end }}
+
+{{ json $ssl_apps }}

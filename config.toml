@@ -1,0 +1,13 @@
+[[config]]
+template = "/app/templates/nginx.conf.tmpl"
+dest = "/etc/nginx/sites-enabled/sites.conf"
+watch = true
+wait = "500ms:2s"
+notifycmd = "/etc/init.d/nginx reload"
+
+[[config]]
+template = "/app/templates/ssl.json.tmpl"
+dest = "/etc/nginx/ssl.json"
+watch = true
+wait = "500ms:2s"
+notifycmd = "cat /etc/nginx/ssl.json"
