@@ -34,9 +34,9 @@ upstream {{ $app }}-{{ $processType }}-{{ $container_port }} {
 {{ $nginx_bind_address_ipv6 := when (contains $first_container.Labels "nginx.bind-address-ipv6") (index $first_container.Labels "nginx.bind-address-ipv6") "[::]" }}
 {{ $nginx_proxy_read_timeout := when (contains $first_container.Labels "nginx.proxy-read-timeout") (index $first_container.Labels "nginx.proxy-read-timeout") "60s" }}
 {{ $nginx_proxy_buffering := when (contains $first_container.Labels "nginx.proxy-buffering") (index $first_container.Labels "nginx.proxy-buffering") "on" }}
-{{ $nginx_proxy_buffer_size := when (contains $first_container.Labels "nginx.proxy-buffer-size") (index $first_container.Labels "nginx.proxy-buffer-size") (env "OS_PAGESIZE") }}
-{{ $nginx_proxy_buffers := when (contains $first_container.Labels "nginx.proxy-buffers") (index $first_container.Labels "nginx.proxy-buffers") (printf "8 %s" (env "OS_PAGESIZE")) }}
-{{ $nginx_proxy_busy_buffer_size := when (contains $first_container.Labels "nginx.proxy-busy-buffer-size") (index $first_container.Labels "nginx.proxy-busy-buffer-size") (mul 2 (atoi (env "OS_PAGESIZE"))) }}
+{{ $nginx_proxy_buffer_size := when (contains $first_container.Labels "nginx.proxy-buffer-size") (index $first_container.Labels "nginx.proxy-buffer-size") (env "NGINX_OS_PAGESIZE") }}
+{{ $nginx_proxy_buffers := when (contains $first_container.Labels "nginx.proxy-buffers") (index $first_container.Labels "nginx.proxy-buffers") (printf "8 %s" (env "NGINX_OS_PAGESIZE")) }}
+{{ $nginx_proxy_busy_buffer_size := when (contains $first_container.Labels "nginx.proxy-busy-buffer-size") (index $first_container.Labels "nginx.proxy-busy-buffer-size") (mul 2 (atoi (env "NGINX_OS_PAGESIZE"))) }}
 {{ $nginx_x_forwarded_for_value := when (contains $first_container.Labels "nginx.x-forwarded-for-value") (index $first_container.Labels "nginx.x-forwarded-for-value") "$remote_addr" }}
 {{ $nginx_x_forwarded_port_value := when (contains $first_container.Labels "nginx.x-forwarded-port-value") (index $first_container.Labels "nginx.x-forwarded-port-value") "$server_port" }}
 {{ $nginx_x_forwarded_proto_value := when (contains $first_container.Labels "nginx.x-forwarded-proto-value") (index $first_container.Labels "nginx.x-forwarded-proto-value") "$scheme" }}
