@@ -56,7 +56,7 @@
 
 #### `nginx.x-forwarded-proto-value`
 
-#### `nginx.x-forwarded-proto-value`
+#### `nginx.x-forwarded-ssl`
 
 ## TODO
 
