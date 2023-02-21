@@ -4,7 +4,13 @@
 {{ $web_process := env "NGINX_WEB_PROCESS" }}
 
 {{ range $app, $appContainers := groupByLabel $ $app_label }}
-{{ $web_containers := whereLabelValueMatches (whereLabelValueMatches $ $app_label $app) $process_label $web_process }}
+{{ $all_app_containers := dict }}
+{{ range $processType, $containers := groupByLabel $appContainers $process_label }}
+{{ $_ := set $all_app_containers $processType $containers }}
+{{ end }}
+
+{{ if (contains $all_app_containers $web_process) }}
+{{ $web_containers := get $all_app_containers $web_process }}
 {{ $first_container := index $web_containers 0 }}
 {{ $letsencrypt_enabled := when (contains $first_container.Labels "nginx.letsencrypt") (index $first_container.Labels "nginx.letsencrypt") "false" }}
 {{ $nginx_domains := when (contains $first_container.Labels "nginx.domains") (index $first_container.Labels "nginx.domains") $app }}
@@ -17,6 +23,8 @@
 {{ if and (eq $scheme "http") (eq $letsencrypt_enabled "true") (has (printf "https:%s:%s" $nginx_http_port $container_port) $port_mappings) }}
 {{ $_ := set $ssl_apps $app $nginx_domains }}
 {{ end }}
+{{ end }}
+
 {{ end }}
 
 {{ end }}
