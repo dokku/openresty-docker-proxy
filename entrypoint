@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -eo pipefail
-set -x
 
 main() {
     local pagesize
@@ -11,7 +10,6 @@ main() {
     sed -i 's#error_log /var/log/nginx/error.log;#error_log stderr;#' /etc/nginx/nginx.conf
     rm -f /etc/nginx/sites-enabled/default
 
-    echo "$@"
     exec "$@"
 }
 
