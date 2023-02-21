@@ -54,6 +54,7 @@ upstream {{ $app }}-{{ $processType }}-{{ $container_port }} {
 {{ $host_port := index (split $port_map ":") 1 }}
 {{ $container_port := index (split $port_map ":") 2 }}
 {{ $has_cert := exists (printf "/etc/nginx/ssl/%s-server.key" $app) }}
+{{ if or (and (eq $scheme "https") ($has_cert)) (eq $scheme "http") }}
 server {
     listen                      [{{ $nginx_bind_address_ipv6 }}]:{{ $host_port }}{{ if and (eq $scheme "https") $has_cert }} ssl http2{{ end }};
     listen                      {{ if $nginx_bind_address_ipv4 }}{{ $nginx_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if and (eq $scheme "https") $has_cert }} ssl http2{{ end }};
@@ -150,5 +151,6 @@ server {
 
     {{ end }}
 }
+{{ end }}
 {{ end }}
 {{ end }}
