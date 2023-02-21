@@ -36,6 +36,8 @@
 
 #### `nginx.initial-network`
 
+#### `nginx.letsencrypt`
+
 #### `nginx.port-mapping`
 
 #### `nginx.proxy-buffer-size`
