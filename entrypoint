@@ -11,6 +11,7 @@ main() {
     rm -f /etc/nginx/sites-enabled/default
 
     # enable udp/tcp proxying
+    mkdir -p  /etc/nginx/stream-sites-enabled
     echo "stream { include /etc/nginx/stream-sites-enabled/*.conf; }" > /etc/nginx/modules-enabled/99-stream-sites.conf
 
     exec "$@"
