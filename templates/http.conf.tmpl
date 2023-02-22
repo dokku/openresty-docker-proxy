@@ -69,7 +69,7 @@ server {
     access_log                  {{ $nginx_access_log_path }}{{ if and ($nginx_access_log_format) (ne $nginx_access_log_path "off") }} {{ $nginx_access_log_format }}{{ end }};
     error_log                   {{ $nginx_error_log_path }};
 
-    {{ if and (or (eq $scheme "grpcs") (eq $scheme "https")) ($has_cert) }}
+    {{ if and (eq $scheme "https") ($has_cert) }}
     ssl_certificate             /etc/nginx/ssl/{{ $app }}-server.crt;
     ssl_certificate_key         /etc/nginx/ssl/{{ $app }}-server.key;
     ssl_protocols               TLSv1.2 TLSv1.3;
