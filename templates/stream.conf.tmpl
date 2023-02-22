@@ -1,0 +1,54 @@
+{{ $upstreams := dict }}
+{{ $app_label := env "NGINX_APP_LABEL" }}
+{{ $process_label := env "NGINX_PROCESS_LABEL" }}
+{{ $web_process := env "NGINX_WEB_PROCESS" }}
+{{ $default_network := env "NGINX_DEFAULT_NETWORK" }}
+{{ range $app, $appContainers := groupByLabel $ $app_label }}
+
+{{ $all_app_containers := dict }}
+{{ range $processType, $containers := groupByLabel $appContainers $process_label }}
+{{ $_ := set $all_app_containers $processType $containers }}
+{{ $first_container := index $containers 0 }}
+{{ $initial_network := when (contains $first_container.Labels "nginx.initial-network") (index $first_container.Labels "nginx.initial-network") "bridge" }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
+{{ range $_, $port_map := $port_mappings  }}
+{{ $scheme := index (split $port_map ":") 0 }}
+{{ if or (eq $scheme "tcp") (eq $scheme "udp") }}
+{{ $container_port := index (split $port_map ":") 2 }}
+
+{{ $upstream_name := printf "%s-%s-%s" $app $processType $container_port }}
+{{ if not (contains $upstreams $upstream_name) }}
+{{ $_ := set $upstreams $upstream_name true }}
+upstream {{ $app }}-{{ $processType }}-{{ $container_port }}-{{ $scheme }} {
+{{ range $_, $container := $containers }}
+{{ range $_, $network := $container.Networks }}
+{{ if eq $network.Name $initial_network }}
+    server {{ $container.IP }}:{{ $container_port }}; # network={{ $network.Name }}
+{{ end }}{{/* endif initial_network */}}
+{{ end }}{{/* endrange networks */}}
+{{ end }}{{/* endrange containers */}}
+}
+{{ end }}{{/* endif scheme in tcp|udp */}}
+{{ end }}{{/* endif contains upstream_name */}}
+{{ end }}{{/* endrange port_mappings */}}
+{{ end }}{{/* endrange groupByLabel appContainers */}}
+
+{{ if (contains $all_app_containers $web_process) }}
+{{ $web_containers := get $all_app_containers $web_process }}
+{{ $first_container := index $web_containers 0 }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
+{{ range $_, $port_map := $port_mappings  }}
+{{ $scheme := index (split $port_map ":") 0 }}
+{{ $host_port := index (split $port_map ":") 1 }}
+{{ $container_port := index (split $port_map ":") 2 }}
+
+{{ if or (eq $scheme "tcp") (eq $scheme "udp") }}
+server {
+    listen     {{ $host_port }}{{ if eq $scheme "udp"}} udp{{ end }};
+    proxy_pass {{ $app }}-{{ $web_process }}-{{ $container_port }}-{{ $scheme }};
+}
+{{ end }}{{/* endif scheme in tcp|udp */}}
+
+{{ end }}{{/* endrange port_mappings */}}
+{{ end }}{{/* endif contains web_process */}}
+{{ end }}
