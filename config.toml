@@ -1,6 +1,13 @@
 [[config]]
-template = "/app/templates/nginx.conf.tmpl"
+template = "/app/templates/http.conf.tmpl"
 dest = "/etc/nginx/sites-enabled/sites.conf"
+watch = true
+wait = "500ms:2s"
+notifycmd = "/etc/init.d/nginx reload"
+
+[[config]]
+template = "/app/templates/stream.conf.tmpl"
+dest = "/etc/nginx/stream-sites-enabled/sites.conf"
 watch = true
 wait = "500ms:2s"
 notifycmd = "/etc/init.d/nginx reload"

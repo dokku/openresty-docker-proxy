@@ -12,6 +12,8 @@
 {{ $initial_network := when (contains $first_container.Labels "nginx.initial-network") (index $first_container.Labels "nginx.initial-network") "bridge" }}
 {{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
+{{ $scheme := index (split $port_map ":") 0 }}
+{{ if or (eq $scheme "http") (eq $scheme "https") }}
 {{ $container_port := index (split $port_map ":") 2 }}
 
 {{ $upstream_name := printf "%s-%s-%s" $app $processType $container_port }}
@@ -21,14 +23,15 @@ upstream {{ $app }}-{{ $processType }}-{{ $container_port }} {
 {{ range $_, $container := $containers }}
 {{ range $_, $network := $container.Networks }}
 {{ if eq $network.Name $initial_network }}
-    server {{ $container.IP }}:{{ $container_port }}; # network={{ $network.Name }}
-{{ end }}
-{{ end }}
-{{ end }}
+    server {{ $container.IP }}:{{ $container_port }}; # network={{ $network.Name }} scheme={{ $scheme }}
+{{ end }}{{/* endif initial_network */}}
+{{ end }}{{/* endrange networks */}}
+{{ end }}{{/* endrange containers */}}
 }
-{{ end }}
-{{ end }}
-{{ end }}
+{{ end }}{{/* endif scheme in http|https */}}
+{{ end }}{{/* endif contains upstream_name */}}
+{{ end }}{{/* endrange port_mappings */}}
+{{ end }}{{/* endrange groupByLabel appContainers */}}
 
 {{ if (contains $all_app_containers $web_process) }}
 {{ $web_containers := get $all_app_containers $web_process }}
