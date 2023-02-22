@@ -9,7 +9,7 @@
 {{ range $processType, $containers := groupByLabel $appContainers $process_label }}
 {{ $_ := set $all_app_containers $processType $containers }}
 {{ $first_container := index $containers 0 }}
-{{ $initial_network := when (contains $first_container.Labels "nginx.initial-network") (index $first_container.Labels "nginx.initial-network") "bridge" }}
+{{ $initial_network := when (contains $first_container.Labels "nginx.initial-network") (index $first_container.Labels "nginx.initial-network") $default_network }}
 {{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
