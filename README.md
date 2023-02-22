@@ -60,6 +60,8 @@ A space-delimited set of domains to proxy.
 
 #### `nginx.https-port`
 
+#### `nginx.include-grpc-*`
+
 #### `nginx.include-http-*`
 
 #### `nginx.include-tcp-*`
@@ -74,6 +76,7 @@ A space-delimited set of domains to proxy.
 
 Holds a space-delimited set of port mappings, where the port mapping is of the format `$scheme:$host_port:$container_port`. Supported schemes:
 
+- grpc/grpcs: For grpc(s) proxying. Only labels that are explicitely called out are supported.
 - tcp/udp: For stream proxying. Only labels that are explicitely called out are supported.
 - http/https: For normal request proxying. Supports most labels unless otherwise specified.
 

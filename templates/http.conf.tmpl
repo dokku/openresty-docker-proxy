@@ -158,6 +158,33 @@ server {
 
     {{ end }}
 }
+{{ else if or (and (eq $scheme "grpcs") ($has_cert)) (eq $scheme "grpc") }}
+server {
+    listen      [{{ $nginx_bind_address_ipv6 }}]:{{ $host_port }}{{ if eq $scheme "grpcs" }}ssl {{ end }} http2;
+    listen      {{ if $nginx_bind_address_ipv4 }}{{ $nginx_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if eq $scheme "grpcs" }}ssl {{ end }} http2;
+    {{ if $nginx_domains }}server_name                 {{ $nginx_domains }};{{ end }}
+    access_log                  {{ $nginx_access_log_path }}{{ if and ($nginx_access_log_format) (ne $nginx_access_log_path "off") }} {{ $nginx_access_log_format }}{{ end }};
+    error_log                   {{ $nginx_error_log_path }};
+
+    {{ if and (eq $scheme "grpcs") ($has_cert) }}
+    ssl_certificate             /etc/nginx/ssl/{{ $app }}-server.crt;
+    ssl_certificate_key         /etc/nginx/ssl/{{ $app }}-server.key;
+    ssl_protocols               TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers   off;
+    {{ end }}
+
+    location    / {
+        grpc_pass  grpc://{{ $app }}-web-{{ $container_port }};
+    }
+
+    {{ if $nginx_client_max_body_size }}client_max_body_size {{ $nginx_client_max_body_size }};{{ end }}
+    {{ range $label, $base64Value := $first_container.Labels }}
+    {{ if hasPrefix (printf "%sinclude-grpc-" $label_prefix) $label }}
+    # {{ $label }}
+{{ indent 4 (b64dec $base64Value) }}
+    {{ end }}
+    {{ end }}
+}
 {{ end }}
 {{ end }}
 {{ end }}
