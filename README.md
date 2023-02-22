@@ -6,13 +6,33 @@
 
 #### `NGINX_APP_LABEL`
 
+> default: `com.dokku.app-name`
+
+An docker label to group server blocks by.
+
 #### `NGINX_PROCESS_LABEL`
+
+> default: `com.dokku.process-type`
+
+A secondary docker label to group process types within servers by.
 
 #### `NGINX_WEB_PROCESS`
 
+> default: `web`
+
+The value of the `NGINX_PROCESS_LABEL` that denotes the primary `web` process to proxy.
+
 #### `NGINX_DEFAULT_NETWORK`
 
+> default: `bridge`
+
+The default network to proxy requests to.
+
 #### `NGINX_OS_PAGESIZE`
+
+> default: computed on container start
+
+The default os page size to base default proxy values on.
 
 ### Labels
 
@@ -28,6 +48,8 @@
 
 #### `nginx.domains`
 
+A space-delimited set of domains to proxy.
+
 #### `nginx.error-log-path`
 
 #### `nginx.https-port`
@@ -39,6 +61,11 @@
 #### `nginx.letsencrypt`
 
 #### `nginx.port-mapping`
+
+Holds a space-delimited set of port mappings, where the port mapping is of the format `$scheme:$host_port:$container_port`. Supported schemes:
+
+- tcp/udp: For stream proxying. Only labels that are explicitely called out are supported.
+- http/https: For normal request proxying. Supports most labels unless otherwise specified.
 
 #### `nginx.proxy-buffer-size`
 
