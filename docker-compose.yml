@@ -10,6 +10,7 @@ services:
     environment:
       NGINX_APP_LABEL: com.dokku.app-name
       NGINX_PROCESS_LABEL: com.dokku.process-type
+      NGINX_LABEL_PREFIX: nginx.
       NGINX_WEB_PROCESS: web
       NGINX_DEFAULT_NETWORK: bridge
 

@@ -10,6 +10,12 @@
 
 An docker label to group server blocks by.
 
+#### `NGINX_LABEL_PREFIX`
+
+> default: `nginx.`
+
+The default prefix to use when looking up labels. All examples below assume the default label prefix.
+
 #### `NGINX_PROCESS_LABEL`
 
 > default: `com.dokku.process-type`

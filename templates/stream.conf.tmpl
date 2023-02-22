@@ -1,4 +1,5 @@
 {{ $upstreams := dict }}
+{{ $label_prefix := (env "NGINX_LABEL_PREFIX") }}
 {{ $app_label := env "NGINX_APP_LABEL" }}
 {{ $process_label := env "NGINX_PROCESS_LABEL" }}
 {{ $web_process := env "NGINX_WEB_PROCESS" }}
@@ -9,8 +10,8 @@
 {{ range $processType, $containers := groupByLabel $appContainers $process_label }}
 {{ $_ := set $all_app_containers $processType $containers }}
 {{ $first_container := index $containers 0 }}
-{{ $initial_network := when (contains $first_container.Labels "nginx.initial-network") (index $first_container.Labels "nginx.initial-network") $default_network }}
-{{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
+{{ $initial_network := when (contains $first_container.Labels (printf "%sinitial-network" $label_prefix)) (index $first_container.Labels (printf "%sinitial-network" $label_prefix)) $default_network }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%sport-mapping" $label_prefix)) (index $first_container.Labels (printf "%sport-mapping" $label_prefix)) "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
 {{ if or (eq $scheme "tcp") (eq $scheme "udp") }}
@@ -36,7 +37,7 @@ upstream {{ $app }}-{{ $processType }}-{{ $container_port }}-{{ $scheme }} {
 {{ if (contains $all_app_containers $web_process) }}
 {{ $web_containers := get $all_app_containers $web_process }}
 {{ $first_container := index $web_containers 0 }}
-{{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%sport-mapping" $label_prefix)) (index $first_container.Labels (printf "%sport-mapping" $label_prefix)) "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
 {{ $host_port := index (split $port_map ":") 1 }}

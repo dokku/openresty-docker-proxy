@@ -1,4 +1,5 @@
 {{ $upstreams := dict }}
+{{ $label_prefix := (env "NGINX_LABEL_PREFIX") }}
 {{ $app_label := env "NGINX_APP_LABEL" }}
 {{ $process_label := env "NGINX_PROCESS_LABEL" }}
 {{ $web_process := env "NGINX_WEB_PROCESS" }}
@@ -9,8 +10,8 @@
 {{ range $processType, $containers := groupByLabel $appContainers $process_label }}
 {{ $_ := set $all_app_containers $processType $containers }}
 {{ $first_container := index $containers 0 }}
-{{ $initial_network := when (contains $first_container.Labels "nginx.initial-network") (index $first_container.Labels "nginx.initial-network") $default_network }}
-{{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
+{{ $initial_network := when (contains $first_container.Labels (printf "%sinitial-network" $label_prefix)) (index $first_container.Labels (printf "%sinitial-network" $label_prefix)) $default_network }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%sport-mapping" $label_prefix)) (index $first_container.Labels (printf "%sport-mapping" $label_prefix)) "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
 {{ if or (eq $scheme "http") (eq $scheme "https") }}
@@ -36,25 +37,25 @@ upstream {{ $app }}-{{ $processType }}-{{ $container_port }} {
 {{ if (contains $all_app_containers $web_process) }}
 {{ $web_containers := get $all_app_containers $web_process }}
 {{ $first_container := index $web_containers 0 }}
-{{ $nginx_bind_address_ipv4 := when (contains $first_container.Labels "nginx.bind-address-ipv4") (index $first_container.Labels "nginx.bind-address-ipv4") "" }}
-{{ $nginx_bind_address_ipv6 := when (contains $first_container.Labels "nginx.bind-address-ipv6") (index $first_container.Labels "nginx.bind-address-ipv6") "::" }}
-{{ $nginx_proxy_read_timeout := when (contains $first_container.Labels "nginx.proxy-read-timeout") (index $first_container.Labels "nginx.proxy-read-timeout") "60s" }}
-{{ $nginx_proxy_buffering := when (contains $first_container.Labels "nginx.proxy-buffering") (index $first_container.Labels "nginx.proxy-buffering") "on" }}
-{{ $nginx_proxy_buffer_size := when (contains $first_container.Labels "nginx.proxy-buffer-size") (index $first_container.Labels "nginx.proxy-buffer-size") (env "NGINX_OS_PAGESIZE") }}
-{{ $nginx_proxy_buffers := when (contains $first_container.Labels "nginx.proxy-buffers") (index $first_container.Labels "nginx.proxy-buffers") (printf "8 %s" (env "NGINX_OS_PAGESIZE")) }}
-{{ $nginx_proxy_busy_buffer_size := when (contains $first_container.Labels "nginx.proxy-busy-buffer-size") (index $first_container.Labels "nginx.proxy-busy-buffer-size") (mul 2 (atoi (env "NGINX_OS_PAGESIZE"))) }}
-{{ $nginx_x_forwarded_for_value := when (contains $first_container.Labels "nginx.x-forwarded-for-value") (index $first_container.Labels "nginx.x-forwarded-for-value") "$remote_addr" }}
-{{ $nginx_x_forwarded_port_value := when (contains $first_container.Labels "nginx.x-forwarded-port-value") (index $first_container.Labels "nginx.x-forwarded-port-value") "$server_port" }}
-{{ $nginx_x_forwarded_proto_value := when (contains $first_container.Labels "nginx.x-forwarded-proto-value") (index $first_container.Labels "nginx.x-forwarded-proto-value") "$scheme" }}
-{{ $nginx_x_forwarded_ssl := when (contains $first_container.Labels "nginx.x-forwarded-proto-value") (index $first_container.Labels "nginx.x-forwarded-ssl") "" }}
-{{ $nginx_client_max_body_size := when (contains $first_container.Labels "nginx.client-max-body-size") (index $first_container.Labels "nginx.client-max-body-size") "" }}
-{{ $nginx_access_log_path := when (contains $first_container.Labels "nginx.access-log-path") (index $first_container.Labels "nginx.access-log-path") (printf "/var/log/nginx/%s-access.log" $app) }}
-{{ $nginx_access_log_format := when (contains $first_container.Labels "nginx.access-log-format") (index $first_container.Labels "nginx.access-log-format") "" }}
-{{ $nginx_error_log_path := when (contains $first_container.Labels "nginx.error-log-path") (index $first_container.Labels "nginx.error-log-path") (printf "/var/log/nginx/%s-error.log" $app) }}
-{{ $nginx_domains := when (contains $first_container.Labels "nginx.domains") (index $first_container.Labels "nginx.domains") $app }}
-{{ $nginx_https_port := when (contains $first_container.Labels "nginx.https-port") (index $first_container.Labels "nginx.https-port") "443" }}
+{{ $nginx_bind_address_ipv4 := when (contains $first_container.Labels (printf "%sbind-address-ipv4" $label_prefix)) (index $first_container.Labels (printf "%sbind-address-ipv4" $label_prefix)) "" }}
+{{ $nginx_bind_address_ipv6 := when (contains $first_container.Labels (printf "%sbind-address-ipv6" $label_prefix)) (index $first_container.Labels (printf "%sbind-address-ipv6" $label_prefix)) "::" }}
+{{ $nginx_proxy_read_timeout := when (contains $first_container.Labels (printf "%sproxy-read-timeout" $label_prefix)) (index $first_container.Labels (printf "%sproxy-read-timeout" $label_prefix)) "60s" }}
+{{ $nginx_proxy_buffering := when (contains $first_container.Labels (printf "%sproxy-buffering" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffering" $label_prefix)) "on" }}
+{{ $nginx_proxy_buffer_size := when (contains $first_container.Labels (printf "%sproxy-buffer-size" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffer-size" $label_prefix)) (env "NGINX_OS_PAGESIZE") }}
+{{ $nginx_proxy_buffers := when (contains $first_container.Labels (printf "%sproxy-buffers" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffers" $label_prefix)) (printf "8 %s" (env "NGINX_OS_PAGESIZE")) }}
+{{ $nginx_proxy_busy_buffer_size := when (contains $first_container.Labels (printf "%sproxy-busy-buffer-size" $label_prefix)) (index $first_container.Labels (printf "%sproxy-busy-buffer-size" $label_prefix)) (mul 2 (atoi (env "NGINX_OS_PAGESIZE"))) }}
+{{ $nginx_x_forwarded_for_value := when (contains $first_container.Labels (printf "%sx-forwarded-for-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-for-value" $label_prefix)) "$remote_addr" }}
+{{ $nginx_x_forwarded_port_value := when (contains $first_container.Labels (printf "%sx-forwarded-port-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-port-value" $label_prefix)) "$server_port" }}
+{{ $nginx_x_forwarded_proto_value := when (contains $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) "$scheme" }}
+{{ $nginx_x_forwarded_ssl := when (contains $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-ssl" $label_prefix)) "" }}
+{{ $nginx_client_max_body_size := when (contains $first_container.Labels (printf "%sclient-max-body-size" $label_prefix)) (index $first_container.Labels (printf "%sclient-max-body-size" $label_prefix)) "" }}
+{{ $nginx_access_log_path := when (contains $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (printf "/var/log/nginx/%s-access.log" $app) }}
+{{ $nginx_access_log_format := when (contains $first_container.Labels (printf "%saccess-log-format" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-format" $label_prefix)) "" }}
+{{ $nginx_error_log_path := when (contains $first_container.Labels (printf "%serror-log-path" $label_prefix)) (index $first_container.Labels (printf "%serror-log-path" $label_prefix)) (printf "/var/log/nginx/%s-error.log" $app) }}
+{{ $nginx_domains := when (contains $first_container.Labels (printf "%sdomains" $label_prefix)) (index $first_container.Labels (printf "%sdomains" $label_prefix)) $app }}
+{{ $nginx_https_port := when (contains $first_container.Labels (printf "%shttps-port" $label_prefix)) (index $first_container.Labels (printf "%shttps-port" $label_prefix)) "443" }}
 
-{{ $port_mappings := split (trim (when (contains $first_container.Labels "nginx.port-mapping") (index $first_container.Labels "nginx.port-mapping") "http:80:5000")) " " }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%sport-mapping" $label_prefix)) (index $first_container.Labels (printf "%sport-mapping" $label_prefix)) "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
 {{ $host_port := index (split $port_map ":") 1 }}
@@ -80,7 +81,7 @@ server {
     {{ end }}
 
     {{ range $label, $base64Value := $first_container.Labels }}
-    {{ if hasPrefix "nginx.include-" $label }}
+    {{ if hasPrefix (printf "%sinclude-" $label_prefix) $label }}
     # {{ $label }}
 {{ indent 4 (b64dec $base64Value) }}
     {{ end }}
