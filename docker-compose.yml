@@ -11,7 +11,7 @@ services:
       NGINX_APP_LABEL: com.dokku.app-name
       NGINX_PROCESS_LABEL: com.dokku.process-type
       NGINX_WEB_PROCESS: web
-      NGINX_NETWORK: bridge
+      NGINX_DEFAULT_NETWORK: bridge
 
     ports:
       - "8080:80"
