@@ -81,7 +81,7 @@ server {
     {{ end }}
 
     {{ range $label, $base64Value := $first_container.Labels }}
-    {{ if hasPrefix (printf "%sinclude-" $label_prefix) $label }}
+    {{ if hasPrefix (printf "%sinclude-http-" $label_prefix) $label }}
     # {{ $label }}
 {{ indent 4 (b64dec $base64Value) }}
     {{ end }}

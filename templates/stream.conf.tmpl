@@ -47,6 +47,12 @@ upstream {{ $app }}-{{ $processType }}-{{ $container_port }}-{{ $scheme }} {
 server {
     listen     {{ $host_port }}{{ if eq $scheme "udp"}} udp{{ end }};
     proxy_pass {{ $app }}-{{ $web_process }}-{{ $container_port }}-{{ $scheme }};
+    {{ range $label, $base64Value := $first_container.Labels }}
+    {{ if hasPrefix (printf "%sinclude-%s-" $label_prefix $scheme) $label }}
+    # {{ $label }}
+{{ indent 4 (b64dec $base64Value) }}
+    {{ end }}
+    {{ end }}
 }
 {{ end }}{{/* endif scheme in tcp|udp */}}
 

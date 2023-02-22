@@ -60,7 +60,11 @@ A space-delimited set of domains to proxy.
 
 #### `nginx.https-port`
 
-#### `nginx.include-*`
+#### `nginx.include-http-*`
+
+#### `nginx.include-tcp-*`
+
+#### `nginx.include-udp-*`
 
 #### `nginx.initial-network`
 
