@@ -12,7 +12,7 @@ RUN git clone https://github.com/nginx-proxy/forego/ \
     && cd - \
     && rm -rf /go/forego
 
-FROM ubuntu:20.04 as downloads
+FROM ubuntu:22.04 as downloads
 
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -31,7 +31,7 @@ RUN dpkg --print-architecture > /tmp/architecture && \
 RUN curl -o /tmp/lego.tar.gz -L "https://github.com/go-acme/lego/releases/download/v${LEGO_VERSION}/lego_v${LEGO_VERSION}_linux_$(cat /tmp/architecture).tar.gz"
 RUN tar xvzf /tmp/lego.tar.gz -C /usr/local/bin
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt-get update && \
     apt-get upgrade -y && \
