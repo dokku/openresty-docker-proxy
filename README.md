@@ -44,13 +44,23 @@ The default os page size to base default proxy values on.
 
 #### `nginx.access-log-format`
 
+The format of the nginx access log for the app.
+
 #### `nginx.access-log-path`
+
+The path - in the container - where the access logs will be written.
 
 #### `nginx.bind-address-ipv4`
 
+The IPv4 address - in the container - nginx will bind to when proxying requests.
+
 #### `nginx.bind-address-ipv6`
 
+The IPv6 address - in the container - nginx will bind to when proxying requests.
+
 #### `nginx.client-max-body-size`
+
+The value of `client_max_body_size`, used for limiting file upload size.
 
 #### `nginx.domains`
 
@@ -58,7 +68,11 @@ A space-delimited set of domains to proxy.
 
 #### `nginx.error-log-path`
 
+The path - in the container - where the error logs will be written.
+
 #### `nginx.https-port`
+
+Port treated as https when parsing port mappings.
 
 #### `nginx.include-grpc-*`
 
@@ -70,6 +84,8 @@ A space-delimited set of domains to proxy.
 
 #### `nginx.initial-network`
 
+The network name to use when proxying requests to the app container.
+
 #### `nginx.port-mapping`
 
 Holds a space-delimited set of port mappings, where the port mapping is of the format `$scheme:$host_port:$container_port`. Supported schemes:
@@ -80,13 +96,23 @@ Holds a space-delimited set of port mappings, where the port mapping is of the f
 
 #### `nginx.proxy-buffer-size`
 
+Sets the size of the buffer proxy_buffer_size used for reading the first part of the response received from the proxied server. By default proxy buffer size is set as the pagesize.
+
 #### `nginx.proxy-buffering`
+
+Enable or disable proxy buffering proxy_buffering. By default proxy buffering is disabled in the NGINX config.
 
 #### `nginx.proxy-buffers`
 
+Sets the number of the buffers in proxy_buffers used for reading the first part of the response received from the proxied server. By default proxy buffers number is set as 4
+
 #### `nginx.proxy-busy-buffer-size`
 
+Sets the size of the buffer proxy_busy_buffer_size used for reading the first part of the response received from the proxied server. By default proxy busy buffer size is set as twice the pagesize.
+
 #### `nginx.proxy-read-timeout`
+
+Defines a timeout for reading a response from the proxied server. 
 
 #### `nginx.x-forwarded-for-value`
 
