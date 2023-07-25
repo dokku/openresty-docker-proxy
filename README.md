@@ -127,7 +127,6 @@ Defines a timeout for reading a response from the proxied server.
 ## TODO
 
 - Add documentation for all labels
-- Add logrotation for internal app logs
 - Add automatic releases
 - Skip apps without domain
 - Skip apps without proxy port mapping

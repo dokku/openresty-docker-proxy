@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+main() {
+  while true; do
+    logrotate --force /etc/logrotate.d/openresty
+    sleep 14400
+  done
+}
+
+main "$@"
