@@ -18,3 +18,10 @@ dest = "/etc/nginx/ssl.json"
 watch = true
 wait = "500ms:2s"
 notifycmd = "cat /etc/nginx/ssl.json"
+
+[[config]]
+template = "/app/templates/dehydrated.sh.tmpl"
+dest = "/etc/resty-auto-ssl/letsencrypt/conf.d/custom.sh"
+watch = true
+wait = "500ms:2s"
+notifycmd = "/etc/init.d/openresty reload"
