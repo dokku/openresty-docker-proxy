@@ -1,5 +1,7 @@
 # nginx-docker-proxy
 
+Uses Openresty - an nginx-compatible server distribution - to proxy requests to other Docker containers based on configured labels.
+
 ## Usage
 
 ### Environment Variables
@@ -112,7 +114,7 @@ Sets the size of the buffer proxy_busy_buffer_size used for reading the first pa
 
 #### `nginx.proxy-read-timeout`
 
-Defines a timeout for reading a response from the proxied server. 
+Defines a timeout for reading a response from the proxied server.
 
 #### `nginx.x-forwarded-for-value`
 

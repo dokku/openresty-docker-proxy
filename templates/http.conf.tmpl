@@ -1,14 +1,14 @@
 {{ $upstreams := dict }}
-{{ $label_prefix := (env "NGINX_LABEL_PREFIX") }}
-{{ $app_label := env "NGINX_APP_LABEL" }}
-{{ $process_label := env "NGINX_PROCESS_LABEL" }}
-{{ $web_process := env "NGINX_WEB_PROCESS" }}
-{{ $default_network := env "NGINX_DEFAULT_NETWORK" }}
+{{ $label_prefix := default "nginx." (env "NGINX_LABEL_PREFIX") }}
+{{ $app_label := default "com.dokku.app-name" (env "NGINX_APP_LABEL") }}
+{{ $process_label := default "com.dokku.process-type" (env "NGINX_PROCESS_LABEL") }}
+{{ $web_process := default "web" (env "NGINX_WEB_PROCESS") }}
+{{ $default_network := default "bridge" (env "NGINX_DEFAULT_NETWORK") }}
 {{ range $app, $appContainers := groupByLabel $ $app_label }}
 
 {{ $all_app_containers := dict }}
-{{ range $processType, $containers := groupByLabel $appContainers $process_label }}
-{{ $_ := set $all_app_containers $processType $containers }}
+{{ range $process_type, $containers := groupByLabel $appContainers $process_label }}
+{{ $_ := set $all_app_containers $process_type $containers }}
 {{ $first_container := index $containers 0 }}
 {{ $initial_network := when (contains $first_container.Labels (printf "%sinitial-network" $label_prefix)) (index $first_container.Labels (printf "%sinitial-network" $label_prefix)) $default_network }}
 {{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%sport-mapping" $label_prefix)) (index $first_container.Labels (printf "%sport-mapping" $label_prefix)) "http:80:5000")) " " }}
@@ -17,14 +17,14 @@
 {{ if or (eq $scheme "http") (eq $scheme "https") }}
 {{ $container_port := index (split $port_map ":") 2 }}
 
-{{ $upstream_name := printf "%s-%s-%s" $app $processType $container_port }}
+{{ $upstream_name := printf "%s-%s-%s" $app $process_type $container_port }}
 {{ if not (contains $upstreams $upstream_name) }}
 {{ $_ := set $upstreams $upstream_name true }}
-upstream {{ $app }}-{{ $processType }}-{{ $container_port }} {
+upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ range $_, $container := $containers }}
 {{ range $_, $network := $container.Networks }}
 {{ if eq $network.Name $initial_network }}
-    server {{ $container.IP }}:{{ $container_port }}; # network={{ $network.Name }} scheme={{ $scheme }}
+    server {{ $container.IP }}:{{ $container_port }}; # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}
 {{ end }}{{/* endif initial_network */}}
 {{ end }}{{/* endrange networks */}}
 {{ end }}{{/* endrange containers */}}

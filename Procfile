@@ -1,2 +1,2 @@
 docker-gen: docker-gen -config /app/config.toml
-nginx: nginx -g 'daemon off;'
+nginx: openresty -g 'daemon off;' -c /etc/nginx/nginx.conf

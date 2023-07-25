@@ -7,8 +7,8 @@
 {{ range $app, $appContainers := groupByLabel $ $app_label }}
 
 {{ $all_app_containers := dict }}
-{{ range $processType, $containers := groupByLabel $appContainers $process_label }}
-{{ $_ := set $all_app_containers $processType $containers }}
+{{ range $process_type, $containers := groupByLabel $appContainers $process_label }}
+{{ $_ := set $all_app_containers $process_type $containers }}
 {{ $first_container := index $containers 0 }}
 {{ $initial_network := when (contains $first_container.Labels (printf "%sinitial-network" $label_prefix)) (index $first_container.Labels (printf "%sinitial-network" $label_prefix)) $default_network }}
 {{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%sport-mapping" $label_prefix)) (index $first_container.Labels (printf "%sport-mapping" $label_prefix)) "http:80:5000")) " " }}
@@ -17,10 +17,10 @@
 {{ if or (eq $scheme "tcp") (eq $scheme "udp") }}
 {{ $container_port := index (split $port_map ":") 2 }}
 
-{{ $upstream_name := printf "%s-%s-%s" $app $processType $container_port }}
+{{ $upstream_name := printf "%s-%s-%s" $app $process_type $container_port }}
 {{ if not (contains $upstreams $upstream_name) }}
 {{ $_ := set $upstreams $upstream_name true }}
-upstream {{ $app }}-{{ $processType }}-{{ $container_port }}-{{ $scheme }} {
+upstream {{ $app }}-{{ $process_type }}-{{ $container_port }}-{{ $scheme }} {
 {{ range $_, $container := $containers }}
 {{ range $_, $network := $container.Networks }}
 {{ if eq $network.Name $initial_network }}

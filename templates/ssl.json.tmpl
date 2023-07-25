@@ -6,8 +6,8 @@
 
 {{ range $app, $appContainers := groupByLabel $ $app_label }}
 {{ $all_app_containers := dict }}
-{{ range $processType, $containers := groupByLabel $appContainers $process_label }}
-{{ $_ := set $all_app_containers $processType $containers }}
+{{ range $process_type, $containers := groupByLabel $appContainers $process_label }}
+{{ $_ := set $all_app_containers $process_type $containers }}
 {{ end }}
 
 {{ if (contains $all_app_containers $web_process) }}
