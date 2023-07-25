@@ -6,14 +6,13 @@ main() {
   pagesize="$(python3 -c "import resource; print(resource.getpagesize());")"
   export NGINX_OS_PAGESIZE=$pagesize
 
-  sed -i 's#access_log /var/log/nginx/access.log;#access_log /dev/stdout;#' /etc/nginx/nginx.conf
-  sed -i 's#error_log /var/log/nginx/error.log;#error_log stderr;#' /etc/nginx/nginx.conf
-  rm -f /etc/nginx/sites-enabled/default
+  echo "====> Generating a self-signed certificate"
+  openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
+    -subj '/CN=sni-support-required-for-valid-ssl' \
+    -keyout /etc/ssl/resty-auto-ssl-fallback.key \
+    -out /etc/ssl/resty-auto-ssl-fallback.crt
 
-  # enable udp/tcp proxying
-  mkdir -p /etc/nginx/stream-sites-enabled
-  echo "stream { include /etc/nginx/stream-sites-enabled/*.conf; }" >/etc/nginx/modules-enabled/99-stream-sites.conf
-
+  echo "====> Starting server"
   exec "$@"
 }
 
