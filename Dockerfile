@@ -24,10 +24,8 @@ RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/nginx-proxy/docker-gen
 
 ARG LEGO_VERSION=4.10.0
 RUN dpkg --print-architecture > /tmp/architecture && \
-    test "$(cat /tmp/architecture)" = "armhf" && \
-    echo "armv7" > /tmp/architecture || true
-
-RUN curl -o /tmp/lego.tar.gz -L "https://github.com/go-acme/lego/releases/download/v${LEGO_VERSION}/lego_v${LEGO_VERSION}_linux_$(cat /tmp/architecture).tar.gz" && \
+    (test "$(cat /tmp/architecture)" = "armhf" && echo "armv7" > /tmp/architecture) && \
+    curl -o /tmp/lego.tar.gz -L "https://github.com/go-acme/lego/releases/download/v${LEGO_VERSION}/lego_v${LEGO_VERSION}_linux_$(cat /tmp/architecture).tar.gz" && \
     tar xvzf /tmp/lego.tar.gz -C /usr/local/bin
 
 FROM ubuntu:22.04
