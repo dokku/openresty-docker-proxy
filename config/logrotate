@@ -1,0 +1,13 @@
+/var/log/nginx/*.log {
+  daily
+  missingok
+  rotate 10
+  compress
+  delaycompress
+  notifempty
+  create 640 root adm
+  sharedscripts
+  postrotate
+    kill -hup $(cat /run/openresty.pid)
+  endscript
+}
