@@ -70,8 +70,6 @@ A space-delimited set of domains to proxy.
 
 #### `nginx.initial-network`
 
-#### `nginx.letsencrypt`
-
 #### `nginx.port-mapping`
 
 Holds a space-delimited set of port mappings, where the port mapping is of the format `$scheme:$host_port:$container_port`. Supported schemes:
@@ -101,7 +99,6 @@ Holds a space-delimited set of port mappings, where the port mapping is of the f
 ## TODO
 
 - Add documentation for all labels
-- Add lego integration
 - Add logrotation for internal app logs
 - Add automatic releases
 - Skip apps without domain
