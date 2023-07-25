@@ -36,7 +36,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends openresty=* openresty-opm=* && \
     luarocks install lua-resty-auto-ssl && \
     ln -sf /usr/local/openresty/nginx/conf /etc/nginx && \
-    mkdir -p /etc/resty-auto-ssl /etc/nginx/stream-sites-enabled /etc/nginx/sites-enabled /var/log/nginx && \
+    mkdir -p /etc/resty-auto-ssl /etc/nginx/ssl /etc/nginx/stream-sites-enabled /etc/nginx/sites-enabled /var/log/nginx && \
     chown www-data /etc/resty-auto-ssl/ && \
     chown root:adm /var/log/nginx && \
     apt-get purge -y gcc make && \

@@ -18,6 +18,18 @@ An docker label to group server blocks by.
 
 The default prefix to use when looking up labels. All examples below assume the default label prefix.
 
+#### `NGINX_LETSENCRYPT_EMAIL`
+
+> default: `` (none)
+
+The email to use for enabling letsencrypt (required).
+
+#### `NGINX_LETSENCRYPT_CA`
+
+> default: `https://acme-v02.api.letsencrypt.org/directory`
+
+The certificate authority to use
+
 #### `NGINX_PROCESS_LABEL`
 
 > default: `com.dokku.process-type`
@@ -87,6 +99,10 @@ Port treated as https when parsing port mappings.
 #### `nginx.initial-network`
 
 The network name to use when proxying requests to the app container.
+
+#### `nginx.letsencrypt`
+
+When set to `true`, this enables dynamic SSL certificate provisioning via Let's Encrypt for any `https:443` port mappings. Note that the corresponding `http:80` port mapping must exist in order for this to succeed.
 
 #### `nginx.port-mapping`
 

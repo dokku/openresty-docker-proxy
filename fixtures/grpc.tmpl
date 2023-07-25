@@ -1,0 +1,13 @@
+upstream python-web-5000 {
+    server VAR_IP_ADDRESS:5000; # app=python process_type=web container_port=5000 network=bridge scheme=grpc
+}
+server {
+    listen                      [::]:80 http2;
+    listen                      80 http2;
+    server_name                 python.example.com;
+    access_log                  /var/log/nginx/python-access.log;
+    error_log                   /var/log/nginx/python-error.log;
+    location    / {
+        grpc_pass  grpc://python-web-5000;
+    }
+}
