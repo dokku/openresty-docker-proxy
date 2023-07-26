@@ -22,6 +22,12 @@ ARG DOCKER_GEN_VERSION=0.10.6
 RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/nginx-proxy/docker-gen/releases/download/${DOCKER_GEN_VERSION}/docker-gen-linux-$(dpkg --print-architecture)-${DOCKER_GEN_VERSION}.tar.gz" && \
     tar xvzf /tmp/docker-gen.tar.gz -C /usr/local/bin
 
+ARG DEHYDRATED_VERSION=0.7.1
+RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/dehydrated-io/dehydrated/releases/download/v${DEHYDRATED_VERSION}/dehydrated-${DEHYDRATED_VERSION}.tar.gz" && \
+    tar xvzf /tmp/docker-gen.tar.gz && \
+    mv dehydrated-${DEHYDRATED_VERSION}/dehydrated /usr/local/bin/dehydrated && \
+    chmod +x /usr/local/bin/dehydrated
+
 FROM ubuntu:22.04
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -49,6 +55,7 @@ COPY config/logrotate /etc/logrotate.d/openresty
 COPY config/nginx.conf /etc/nginx/nginx.conf
 COPY --from=forego /usr/local/bin/forego /usr/local/bin/forego
 COPY --from=downloads /usr/local/bin/docker-gen /usr/local/bin/docker-gen
+COPY --from=downloads /usr/local/bin/dehydrated /usr/local/bin/resty-auto-ssl/dehydrated
 COPY ["bin", "/usr/local/bin/"]
 COPY ["config.toml", "Procfile", "/app/"]
 COPY ["templates", "/app/templates/"]
