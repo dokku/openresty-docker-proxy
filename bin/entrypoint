@@ -3,7 +3,7 @@ set -eo pipefail
 
 main() {
   local pagesize
-  pagesize="$(python3 -c "import resource; print(resource.getpagesize());")"
+  pagesize="$(getconf PAGESIZE)"
   export NGINX_OS_PAGESIZE=$pagesize
 
   echo "====> Generating a self-signed certificate"
