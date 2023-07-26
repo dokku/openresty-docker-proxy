@@ -41,7 +41,9 @@ RUN apt-get update && \
     chown root:adm /var/log/nginx && \
     apt-get purge -y gcc make && \
     rm -f /etc/nginx/sites-enabled/default && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean autoclean && \
+    apt-get autoremove --yes  && \
+    rm -rf /var/lib/apt/lists/* /root/.cache
 
 COPY config/logrotate /etc/logrotate.d/openresty
 COPY config/nginx.conf /etc/nginx/nginx.conf
