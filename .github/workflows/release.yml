@@ -19,7 +19,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            dokku/letsencrypt
+            dokku/nginx-docker-proxy
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
