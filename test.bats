@@ -39,6 +39,8 @@ teardown() {
   echo "status: $status"
   assert_success
 
+  sleep 3
+
   run docker inspect nginx-docker-proxy
   echo "output: $output"
   echo "status: $status"
@@ -48,8 +50,6 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
-
-  sleep 2
 
   run docker container rm -f nginx-docker-proxy
   echo "output: $output"
@@ -73,7 +73,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  sleep 1
+  sleep 3
 
   run docker logs nginx-docker-proxy
   echo "output: $output"
@@ -104,7 +104,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  sleep 2
+  sleep 3
 
   run docker logs nginx-docker-proxy
   echo "output: $output"
@@ -126,7 +126,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  sleep 1
+  sleep 3
 
   run docker logs nginx-docker-proxy
   echo "output: $output"
@@ -162,7 +162,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  sleep 1
+  sleep 3
 
   run docker logs nginx-docker-proxy
   echo "output: $output"
@@ -198,7 +198,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  sleep 1
+  sleep 3
 
   run docker logs nginx-docker-proxy
   echo "output: $output"
@@ -229,7 +229,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  sleep 2
+  sleep 3
 
   run docker logs nginx-docker-proxy
   echo "output: $output"
@@ -251,7 +251,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  sleep 1
+  sleep 3
 
   run docker logs nginx-docker-proxy
   echo "output: $output"
@@ -287,7 +287,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  sleep 1
+  sleep 3
 
   run docker logs nginx-docker-proxy
   echo "output: $output"
