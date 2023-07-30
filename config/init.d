@@ -1,5 +1,4 @@
 #!/bin/sh
-set -x
 
 ### BEGIN INIT INFO
 # Provides:	  openresty
@@ -10,6 +9,10 @@ set -x
 # Short-Description: starts openresty
 # Description:       starts openresty using start-stop-daemon
 ### END INIT INFO
+
+if [ -n "$TRACE" ]; then
+	set -x
+fi
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/local/openresty/nginx/sbin/nginx
