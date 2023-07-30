@@ -33,7 +33,7 @@ FROM ubuntu:22.04
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends ca-certificates=* luarocks=* gcc=* gnupg=* logrotate=* make=* wget=* && \
+    apt-get install -y --no-install-recommends bsdmainutils=* ca-certificates=* luarocks=* gcc=* gnupg=* logrotate=* make=* wget=* && \
     wget -nv -O - https://openresty.org/package/pubkey.gpg | gpg --dearmor -o /usr/share/keyrings/openresty.gpg && \
     (if [ "$(dpkg --print-architecture)" = "amd64" ]; then echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/ubuntu jammy main" > /etc/apt/sources.list.d/openresty.list; fi) && \
     (if [ "$(dpkg --print-architecture)" = "arm64" ]; then echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/arm64/ubuntu jammy main" > /etc/apt/sources.list.d/openresty.list; fi) && \
