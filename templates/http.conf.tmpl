@@ -61,7 +61,7 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ $nginx_access_log_path := when (contains $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (printf "/var/log/nginx/%s-access.log" $app) }}
 {{ $nginx_access_log_format := when (contains $first_container.Labels (printf "%saccess-log-format" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-format" $label_prefix)) "" }}
 {{ $nginx_error_log_path := when (contains $first_container.Labels (printf "%serror-log-path" $label_prefix)) (index $first_container.Labels (printf "%serror-log-path" $label_prefix)) (printf "/var/log/nginx/%s-error.log" $app) }}
-{{ $nginx_domains := when (contains $first_container.Labels (printf "%sdomains" $label_prefix)) (index $first_container.Labels (printf "%sdomains" $label_prefix)) $app }}
+{{ $nginx_domains := when (contains $first_container.Labels (printf "%sdomains" $label_prefix)) (index $first_container.Labels (printf "%sdomains" $label_prefix)) "" }}
 {{ $nginx_https_port := when (contains $first_container.Labels (printf "%shttps-port" $label_prefix)) (index $first_container.Labels (printf "%shttps-port" $label_prefix)) "443" }}
 {{ $nginx_letsencrypt := when (contains $first_container.Labels (printf "%sletsencrypt" $label_prefix)) (index $first_container.Labels (printf "%sletsencrypt" $label_prefix)) "" }}
 {{ $nginx_letsencrypt_enabled := eq $nginx_letsencrypt "true" }}
