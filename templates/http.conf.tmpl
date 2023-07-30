@@ -1,4 +1,5 @@
 {{ $upstreams := dict }}
+{{ $all_domains := dict }}
 {{ $label_prefix := default "nginx." (env "NGINX_LABEL_PREFIX") }}
 {{ $app_label := default "com.dokku.app-name" (env "NGINX_APP_LABEL") }}
 {{ $process_label := default "com.dokku.process-type" (env "NGINX_PROCESS_LABEL") }}
@@ -66,11 +67,18 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ $nginx_access_log_format := when (contains $first_container.Labels (printf "%saccess-log-format" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-format" $label_prefix)) "" }}
 {{ $nginx_error_log_path := when (contains $first_container.Labels (printf "%serror-log-path" $label_prefix)) (index $first_container.Labels (printf "%serror-log-path" $label_prefix)) (printf "/var/log/nginx/%s-error.log" $app) }}
 {{ $nginx_domains := when (contains $first_container.Labels (printf "%sdomains" $label_prefix)) (index $first_container.Labels (printf "%sdomains" $label_prefix)) "" }}
+{{ $nginx_domains_list := splitList " " $nginx_domains }}
 {{ $nginx_https_port := when (contains $first_container.Labels (printf "%shttps-port" $label_prefix)) (index $first_container.Labels (printf "%shttps-port" $label_prefix)) "443" }}
 {{ $nginx_letsencrypt := when (contains $first_container.Labels (printf "%sletsencrypt" $label_prefix)) (index $first_container.Labels (printf "%sletsencrypt" $label_prefix)) "" }}
 {{ $nginx_letsencrypt_enabled := eq $nginx_letsencrypt "true" }}
 {{ $nginx_has_cert := exists (printf "/etc/nginx/ssl/%s-server.key" $app) }}
 {{ $nginx_ssl_enabled := or ($nginx_has_cert) ($nginx_letsencrypt_enabled) }}
+
+{{ range $nginx_domains_list }}
+    {{ if ne (trim .) "" }}
+        {{ $_ := set $all_domains . . }}
+    {{ end }}
+{{ end }}
 
 {{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%sport-mapping" $label_prefix)) (index $first_container.Labels (printf "%sport-mapping" $label_prefix)) "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
@@ -216,4 +224,20 @@ server {
 {{ end }}
 {{ end }}
 {{ end }}
+{{ end }}
+
+{{ if and (ne (env "NGINX_IGNORE_DEFAULT_DOMAIN") "false") (not (hasKey $all_domains "_")) }}
+# set a default server block if there is no default (_) server
+server {
+    server_name _;
+    listen 80 default_server;
+    return 404;
+}
+server {
+    listen              443 ssl;
+    server_name         _;
+    ssl_certificate     /etc/ssl/resty-auto-ssl-fallback.crt;
+    ssl_certificate_key /etc/ssl/resty-auto-ssl-fallback.key;
+    return              404;
+}
 {{ end }}

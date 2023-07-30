@@ -18,6 +18,12 @@ An docker label to group server blocks by.
 
 Set to `true` to enable debugging comments in the generated config files.
 
+#### `NGINX_IGNORE_DEFAULT_DOMAIN`
+
+> default: `true`
+
+When `true`, all requests to a domain where there is a port listener will be ignored. Set to `false` to allow nginx to handle the default domain normally.
+
 #### `NGINX_LABEL_PREFIX`
 
 > default: `nginx.`
