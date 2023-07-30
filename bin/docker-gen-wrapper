@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+main() {
+  echo "====> Sleeping for two seconds to allow server time to start"
+  sleep 2
+
+  echo "====> Starting server"
+  docker-gen "$@"
+}
+
+main "$@"

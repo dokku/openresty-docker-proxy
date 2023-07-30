@@ -1,3 +1,3 @@
-docker-gen: docker-gen -config /app/config.toml
+docker-gen: docker-gen-wrapper -config /app/config.toml
 nginx: openresty -g 'daemon off;' -c /etc/nginx/nginx.conf
 logrotate: run-logrotate
