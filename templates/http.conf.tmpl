@@ -4,6 +4,14 @@
 {{ $process_label := default "com.dokku.process-type" (env "NGINX_PROCESS_LABEL") }}
 {{ $web_process := default "web" (env "NGINX_WEB_PROCESS") }}
 {{ $default_network := default "bridge" (env "NGINX_DEFAULT_NETWORK") }}
+
+# label_prefix: {{ $label_prefix }}
+# app_label: {{ $app_label }}
+# process_label: {{ $process_label }}
+# web_process: {{ $web_process }}
+# default_network: {{ $default_network }}
+# default_pagesize: {{ env "NGINX_OS_PAGESIZE" }}
+
 {{ range $app, $appContainers := groupByLabel $ $app_label }}
 
 {{ $all_app_containers := dict }}
@@ -23,6 +31,7 @@
 upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ range $_, $container := $containers }}
 {{ range $_, $network := $container.Networks }}
+    # current_network={{ $network.Name }} initial_network={{ $initial_network }}
 {{ if eq $network.Name $initial_network }}
     server {{ $container.IP }}:{{ $container_port }}; # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}
 {{ end }}{{/* endif initial_network */}}
