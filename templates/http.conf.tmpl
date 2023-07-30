@@ -5,12 +5,14 @@
 {{ $web_process := default "web" (env "NGINX_WEB_PROCESS") }}
 {{ $default_network := default "bridge" (env "NGINX_DEFAULT_NETWORK") }}
 
+{{ if eq (env "NGINX_DEBUG") "true" }}
 # label_prefix: {{ $label_prefix }}
 # app_label: {{ $app_label }}
 # process_label: {{ $process_label }}
 # web_process: {{ $web_process }}
 # default_network: {{ $default_network }}
 # default_pagesize: {{ env "NGINX_OS_PAGESIZE" }}
+{{ end }}
 
 {{ range $app, $appContainers := groupByLabel $ $app_label }}
 
@@ -31,9 +33,11 @@
 upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ range $_, $container := $containers }}
 {{ range $_, $network := $container.Networks }}
-    # current_network={{ $network.Name }} initial_network={{ $initial_network }}
+    {{ if eq (env "NGINX_DEBUG") "true" }}
+        # current_network={{ $network.Name }} initial_network={{ $initial_network }}
+    {{ end }}
 {{ if eq $network.Name $initial_network }}
-    server {{ $container.IP }}:{{ $container_port }}; # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}
+    server {{ $container.IP }}:{{ $container_port }};{{ if eq (env "NGINX_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}{{ end }}
 {{ end }}{{/* endif initial_network */}}
 {{ end }}{{/* endrange networks */}}
 {{ end }}{{/* endrange containers */}}
@@ -89,7 +93,6 @@ server {
     ssl_certificate_by_lua_block {
         auto_ssl:ssl_certificate()
     }
-
     # fallback certificates
     ssl_certificate             /etc/ssl/resty-auto-ssl-fallback.crt;
     ssl_certificate_key         /etc/ssl/resty-auto-ssl-fallback.key;
