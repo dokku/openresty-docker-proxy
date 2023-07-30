@@ -12,6 +12,9 @@ main() {
     -keyout /etc/ssl/resty-auto-ssl-fallback.key \
     -out /etc/ssl/resty-auto-ssl-fallback.crt
 
+  mkdir -p /etc/resty-auto-ssl/storage
+  chown www-data:www-data /etc/resty-auto-ssl/storage
+
   echo "====> Starting server"
   exec "$@"
 }
