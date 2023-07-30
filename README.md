@@ -12,6 +12,12 @@ Uses Openresty - an nginx-compatible server distribution - to proxy requests to 
 
 An docker label to group server blocks by.
 
+#### `NGINX_DEBUG`
+
+> default: `` (none)
+
+Set to `true` to enable debugging comments in the generated config files.
+
 #### `NGINX_LABEL_PREFIX`
 
 > default: `nginx.`
