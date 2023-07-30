@@ -42,7 +42,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends openresty=* openresty-opm=* && \
     luarocks install lua-resty-auto-ssl && \
     ln -sf /usr/local/openresty/nginx/conf /etc/nginx && \
-    mkdir -p /etc/resty-auto-ssl /etc/nginx/ssl /etc/nginx/stream-sites-enabled /etc/nginx/sites-enabled /var/log/nginx && \
+    mkdir -p /etc/resty-auto-ssl/letsencrypt/conf.d /etc/nginx/ssl /etc/nginx/stream-sites-enabled /etc/nginx/sites-enabled /var/log/nginx && \
     chown www-data /etc/resty-auto-ssl/ && \
     chown root:adm /var/log/nginx && \
     apt-get purge -y gcc make && \
@@ -68,6 +68,7 @@ RUN apt-get update && \
     find /var/cache/ ! -type d -exec rm '{}' \;
 
 COPY config/logrotate /etc/logrotate.d/openresty
+COPY config/init.d /etc/init.d/openresty
 COPY config/nginx.conf /etc/nginx/nginx.conf
 COPY --from=forego /usr/local/bin/forego /usr/local/bin/forego
 COPY --from=downloads /usr/local/bin/docker-gen /usr/local/bin/docker-gen
