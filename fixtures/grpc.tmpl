@@ -1,5 +1,5 @@
 upstream python-web-5000 {
-    server VAR_IP_ADDRESS:5000; # app=python process_type=web container_port=5000 network=bridge scheme=grpc
+    server VAR_IP_ADDRESS:5000;
 }
 server {
     listen                      [::]:80 http2;
@@ -10,4 +10,17 @@ server {
     location    / {
         grpc_pass  grpc://python-web-5000;
     }
+}
+# set a default server block if there is no default (_) server
+server {
+    server_name _;
+    listen 80 default_server;
+    return 404;
+}
+server {
+    listen              443 ssl;
+    server_name         _;
+    ssl_certificate     /etc/ssl/resty-auto-ssl-fallback.crt;
+    ssl_certificate_key /etc/ssl/resty-auto-ssl-fallback.key;
+    return              404;
 }

@@ -10,6 +10,10 @@ setup() {
     docker container rm -f "$(cat /tmp/cid-file)" || true
     rm /tmp/cid-file
   fi
+  if [[ -f "/tmp/cid-file-2" ]]; then
+    docker container rm -f "$(cat /tmp/cid-file-2)" || true
+    rm /tmp/cid-file-2
+  fi
 }
 
 teardown() {
@@ -18,6 +22,10 @@ teardown() {
   if [[ -f "/tmp/cid-file" ]]; then
     docker container rm -f "$(cat /tmp/cid-file)" || true
     rm /tmp/cid-file
+  fi
+  if [[ -f "/tmp/cid-file-2" ]]; then
+    docker container rm -f "$(cat /tmp/cid-file-2)" || true
+    rm /tmp/cid-file-2
   fi
 }
 
@@ -305,6 +313,25 @@ teardown() {
   echo "status: $status"
   assert_success
   assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/https.letsencrypt.tmpl)"
+
+  run docker run --rm --cidfile /tmp/cid-file-2 --platform linux/amd64 '--label=nginx.domains=python2.example.com _' '--label=nginx.port-mapping=http:80:5000 https:443:5000' --label=nginx.letsencrypt=true --label=com.dokku.app-name=python2 --label=com.dokku.process-type=web --name "${TEST_CONTAINER_NAME}_2" -d dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  IP_ADDRESS_2="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "${TEST_CONTAINER_NAME}_2")"
+  run echo "$IP_ADDRESS_2"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker exec -it nginx-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_1/$IP_ADDRESS/" -e "s/VAR_IP_ADDRESS_2/$IP_ADDRESS_2/" fixtures/https.letsencrypt-no-default.tmpl)"
 }
 
 assert_equal() {
