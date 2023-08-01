@@ -2,17 +2,17 @@
 version: "3.7"
 
 services:
-  nginx:
+  openresty:
     build: .
 
     network_mode: bridge
 
     environment:
-      NGINX_APP_LABEL: com.dokku.app-name
-      NGINX_PROCESS_LABEL: com.dokku.process-type
-      NGINX_LABEL_PREFIX: nginx.
-      NGINX_WEB_PROCESS: web
-      NGINX_DEFAULT_NETWORK: bridge
+      OPENRESTY_APP_LABEL: com.dokku.app-name
+      OPENRESTY_PROCESS_LABEL: com.dokku.process-type
+      OPENRESTY_LABEL_PREFIX: openresty.
+      OPENRESTY_WEB_PROCESS: web
+      OPENRESTY_DEFAULT_NETWORK: bridge
 
     ports:
       - "8080:80"
