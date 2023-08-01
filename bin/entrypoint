@@ -4,7 +4,7 @@ set -eo pipefail
 main() {
   local pagesize
   pagesize="$(getconf PAGESIZE)"
-  export NGINX_OS_PAGESIZE=$pagesize
+  export OPENRESTY_OS_PAGESIZE=$pagesize
 
   echo "====> Generating a self-signed certificate"
   openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \

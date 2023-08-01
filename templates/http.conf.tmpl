@@ -1,18 +1,18 @@
 {{ $upstreams := dict }}
 {{ $all_domains := dict }}
-{{ $label_prefix := default "nginx." (env "NGINX_LABEL_PREFIX") }}
-{{ $app_label := default "com.dokku.app-name" (env "NGINX_APP_LABEL") }}
-{{ $process_label := default "com.dokku.process-type" (env "NGINX_PROCESS_LABEL") }}
-{{ $web_process := default "web" (env "NGINX_WEB_PROCESS") }}
-{{ $default_network := default "bridge" (env "NGINX_DEFAULT_NETWORK") }}
+{{ $label_prefix := default "openresty." (env "OPENRESTY_LABEL_PREFIX") }}
+{{ $app_label := default "com.dokku.app-name" (env "OPENRESTY_APP_LABEL") }}
+{{ $process_label := default "com.dokku.process-type" (env "OPENRESTY_PROCESS_LABEL") }}
+{{ $web_process := default "web" (env "OPENRESTY_WEB_PROCESS") }}
+{{ $default_network := default "bridge" (env "OPENRESTY_DEFAULT_NETWORK") }}
 
-{{ if eq (env "NGINX_DEBUG") "true" }}
+{{ if eq (env "OPENRESTY_DEBUG") "true" }}
 # label_prefix: {{ $label_prefix }}
 # app_label: {{ $app_label }}
 # process_label: {{ $process_label }}
 # web_process: {{ $web_process }}
 # default_network: {{ $default_network }}
-# default_pagesize: {{ env "NGINX_OS_PAGESIZE" }}
+# default_pagesize: {{ env "OPENRESTY_OS_PAGESIZE" }}
 {{ end }}
 
 {{ range $app, $appContainers := groupByLabel $ $app_label }}
@@ -34,11 +34,11 @@
 upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ range $_, $container := $containers }}
 {{ range $_, $network := $container.Networks }}
-    {{ if eq (env "NGINX_DEBUG") "true" }}
+    {{ if eq (env "OPENRESTY_DEBUG") "true" }}
         # current_network={{ $network.Name }} initial_network={{ $initial_network }}
     {{ end }}
 {{ if eq $network.Name $initial_network }}
-    server {{ $container.IP }}:{{ $container_port }};{{ if eq (env "NGINX_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}{{ end }}
+    server {{ $container.IP }}:{{ $container_port }};{{ if eq (env "OPENRESTY_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}{{ end }}
 {{ end }}{{/* endif initial_network */}}
 {{ end }}{{/* endrange networks */}}
 {{ end }}{{/* endrange containers */}}
@@ -51,30 +51,30 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ if (contains $all_app_containers $web_process) }}
 {{ $web_containers := get $all_app_containers $web_process }}
 {{ $first_container := index $web_containers 0 }}
-{{ $nginx_bind_address_ipv4 := when (contains $first_container.Labels (printf "%sbind-address-ipv4" $label_prefix)) (index $first_container.Labels (printf "%sbind-address-ipv4" $label_prefix)) "" }}
-{{ $nginx_bind_address_ipv6 := when (contains $first_container.Labels (printf "%sbind-address-ipv6" $label_prefix)) (index $first_container.Labels (printf "%sbind-address-ipv6" $label_prefix)) "::" }}
-{{ $nginx_proxy_read_timeout := when (contains $first_container.Labels (printf "%sproxy-read-timeout" $label_prefix)) (index $first_container.Labels (printf "%sproxy-read-timeout" $label_prefix)) "60s" }}
-{{ $nginx_proxy_buffering := when (contains $first_container.Labels (printf "%sproxy-buffering" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffering" $label_prefix)) "on" }}
-{{ $nginx_proxy_buffer_size := when (contains $first_container.Labels (printf "%sproxy-buffer-size" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffer-size" $label_prefix)) (env "NGINX_OS_PAGESIZE") }}
-{{ $nginx_proxy_buffers := when (contains $first_container.Labels (printf "%sproxy-buffers" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffers" $label_prefix)) (printf "8 %s" (env "NGINX_OS_PAGESIZE")) }}
-{{ $nginx_proxy_busy_buffer_size := when (contains $first_container.Labels (printf "%sproxy-busy-buffer-size" $label_prefix)) (index $first_container.Labels (printf "%sproxy-busy-buffer-size" $label_prefix)) (mul 2 (atoi (env "NGINX_OS_PAGESIZE"))) }}
-{{ $nginx_x_forwarded_for_value := when (contains $first_container.Labels (printf "%sx-forwarded-for-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-for-value" $label_prefix)) "$remote_addr" }}
-{{ $nginx_x_forwarded_port_value := when (contains $first_container.Labels (printf "%sx-forwarded-port-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-port-value" $label_prefix)) "$server_port" }}
-{{ $nginx_x_forwarded_proto_value := when (contains $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) "$scheme" }}
-{{ $nginx_x_forwarded_ssl := when (contains $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-ssl" $label_prefix)) "" }}
-{{ $nginx_client_max_body_size := when (contains $first_container.Labels (printf "%sclient-max-body-size" $label_prefix)) (index $first_container.Labels (printf "%sclient-max-body-size" $label_prefix)) "" }}
-{{ $nginx_access_log_path := when (contains $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (printf "/var/log/nginx/%s-access.log" $app) }}
-{{ $nginx_access_log_format := when (contains $first_container.Labels (printf "%saccess-log-format" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-format" $label_prefix)) "" }}
-{{ $nginx_error_log_path := when (contains $first_container.Labels (printf "%serror-log-path" $label_prefix)) (index $first_container.Labels (printf "%serror-log-path" $label_prefix)) (printf "/var/log/nginx/%s-error.log" $app) }}
-{{ $nginx_domains := when (contains $first_container.Labels (printf "%sdomains" $label_prefix)) (index $first_container.Labels (printf "%sdomains" $label_prefix)) "" }}
-{{ $nginx_domains_list := splitList " " $nginx_domains }}
-{{ $nginx_https_port := when (contains $first_container.Labels (printf "%shttps-port" $label_prefix)) (index $first_container.Labels (printf "%shttps-port" $label_prefix)) "443" }}
-{{ $nginx_letsencrypt := when (contains $first_container.Labels (printf "%sletsencrypt" $label_prefix)) (index $first_container.Labels (printf "%sletsencrypt" $label_prefix)) "" }}
-{{ $nginx_letsencrypt_enabled := eq $nginx_letsencrypt "true" }}
-{{ $nginx_has_cert := exists (printf "/etc/nginx/ssl/%s-server.key" $app) }}
-{{ $nginx_ssl_enabled := or ($nginx_has_cert) ($nginx_letsencrypt_enabled) }}
+{{ $openresty_bind_address_ipv4 := when (contains $first_container.Labels (printf "%sbind-address-ipv4" $label_prefix)) (index $first_container.Labels (printf "%sbind-address-ipv4" $label_prefix)) "" }}
+{{ $openresty_bind_address_ipv6 := when (contains $first_container.Labels (printf "%sbind-address-ipv6" $label_prefix)) (index $first_container.Labels (printf "%sbind-address-ipv6" $label_prefix)) "::" }}
+{{ $openresty_proxy_read_timeout := when (contains $first_container.Labels (printf "%sproxy-read-timeout" $label_prefix)) (index $first_container.Labels (printf "%sproxy-read-timeout" $label_prefix)) "60s" }}
+{{ $openresty_proxy_buffering := when (contains $first_container.Labels (printf "%sproxy-buffering" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffering" $label_prefix)) "on" }}
+{{ $openresty_proxy_buffer_size := when (contains $first_container.Labels (printf "%sproxy-buffer-size" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffer-size" $label_prefix)) (env "OPENRESTY_OS_PAGESIZE") }}
+{{ $openresty_proxy_buffers := when (contains $first_container.Labels (printf "%sproxy-buffers" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffers" $label_prefix)) (printf "8 %s" (env "OPENRESTY_OS_PAGESIZE")) }}
+{{ $openresty_proxy_busy_buffer_size := when (contains $first_container.Labels (printf "%sproxy-busy-buffer-size" $label_prefix)) (index $first_container.Labels (printf "%sproxy-busy-buffer-size" $label_prefix)) (mul 2 (atoi (env "OPENRESTY_OS_PAGESIZE"))) }}
+{{ $openresty_x_forwarded_for_value := when (contains $first_container.Labels (printf "%sx-forwarded-for-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-for-value" $label_prefix)) "$remote_addr" }}
+{{ $openresty_x_forwarded_port_value := when (contains $first_container.Labels (printf "%sx-forwarded-port-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-port-value" $label_prefix)) "$server_port" }}
+{{ $openresty_x_forwarded_proto_value := when (contains $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) "$scheme" }}
+{{ $openresty_x_forwarded_ssl := when (contains $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-ssl" $label_prefix)) "" }}
+{{ $openresty_client_max_body_size := when (contains $first_container.Labels (printf "%sclient-max-body-size" $label_prefix)) (index $first_container.Labels (printf "%sclient-max-body-size" $label_prefix)) "" }}
+{{ $openresty_access_log_path := when (contains $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (printf "/var/log/nginx/%s-access.log" $app) }}
+{{ $openresty_access_log_format := when (contains $first_container.Labels (printf "%saccess-log-format" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-format" $label_prefix)) "" }}
+{{ $openresty_error_log_path := when (contains $first_container.Labels (printf "%serror-log-path" $label_prefix)) (index $first_container.Labels (printf "%serror-log-path" $label_prefix)) (printf "/var/log/nginx/%s-error.log" $app) }}
+{{ $openresty_domains := when (contains $first_container.Labels (printf "%sdomains" $label_prefix)) (index $first_container.Labels (printf "%sdomains" $label_prefix)) "" }}
+{{ $openresty_domains_list := splitList " " $openresty_domains }}
+{{ $openresty_https_port := when (contains $first_container.Labels (printf "%shttps-port" $label_prefix)) (index $first_container.Labels (printf "%shttps-port" $label_prefix)) "443" }}
+{{ $openresty_letsencrypt := when (contains $first_container.Labels (printf "%sletsencrypt" $label_prefix)) (index $first_container.Labels (printf "%sletsencrypt" $label_prefix)) "" }}
+{{ $openresty_letsencrypt_enabled := eq $openresty_letsencrypt "true" }}
+{{ $openresty_has_cert := exists (printf "/etc/nginx/ssl/%s-server.key" $app) }}
+{{ $openresty_ssl_enabled := or ($openresty_has_cert) ($openresty_letsencrypt_enabled) }}
 
-{{ range $nginx_domains_list }}
+{{ range $openresty_domains_list }}
     {{ if ne (trim .) "" }}
         {{ $_ := set $all_domains . . }}
     {{ end }}
@@ -85,19 +85,19 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ $scheme := index (split $port_map ":") 0 }}
 {{ $host_port := index (split $port_map ":") 1 }}
 {{ $container_port := index (split $port_map ":") 2 }}
-{{ if or (and (eq $scheme "https") $nginx_ssl_enabled) (eq $scheme "http") }}
+{{ if or (and (eq $scheme "https") $openresty_ssl_enabled) (eq $scheme "http") }}
 server {
-    listen                      [{{ $nginx_bind_address_ipv6 }}]:{{ $host_port }}{{ if and (eq $scheme "https") $nginx_ssl_enabled }} ssl http2{{ end }};
-    listen                      {{ if $nginx_bind_address_ipv4 }}{{ $nginx_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if and (eq $scheme "https") $nginx_ssl_enabled }} ssl http2{{ end }};
-    {{ if $nginx_domains }}server_name                 {{ $nginx_domains }};{{ end }}
-    access_log                  {{ $nginx_access_log_path }}{{ if and ($nginx_access_log_format) (ne $nginx_access_log_path "off") }} {{ $nginx_access_log_format }}{{ end }};
-    error_log                   {{ $nginx_error_log_path }};
+    listen                      [{{ $openresty_bind_address_ipv6 }}]:{{ $host_port }}{{ if and (eq $scheme "https") $openresty_ssl_enabled }} ssl http2{{ end }};
+    listen                      {{ if $openresty_bind_address_ipv4 }}{{ $openresty_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if and (eq $scheme "https") $openresty_ssl_enabled }} ssl http2{{ end }};
+    {{ if $openresty_domains }}server_name                 {{ $openresty_domains }};{{ end }}
+    access_log                  {{ $openresty_access_log_path }}{{ if and ($openresty_access_log_format) (ne $openresty_access_log_path "off") }} {{ $openresty_access_log_format }}{{ end }};
+    error_log                   {{ $openresty_error_log_path }};
 
-    {{ if and (eq $scheme "https") $nginx_ssl_enabled }}
-    {{ if $nginx_has_cert }}
+    {{ if and (eq $scheme "https") $openresty_ssl_enabled }}
+    {{ if $openresty_has_cert }}
     ssl_certificate             /etc/nginx/ssl/{{ $app }}-server.crt;
     ssl_certificate_key         /etc/nginx/ssl/{{ $app }}-server.key;
-    {{ else if $nginx_letsencrypt_enabled }}
+    {{ else if $openresty_letsencrypt_enabled }}
     ssl_certificate_by_lua_block {
         auto_ssl:ssl_certificate()
     }
@@ -117,9 +117,9 @@ server {
     {{ end }}
     {{ end }}
 
-    {{ if $nginx_client_max_body_size }}client_max_body_size {{ $nginx_client_max_body_size }};{{ end }}
+    {{ if $openresty_client_max_body_size }}client_max_body_size {{ $openresty_client_max_body_size }};{{ end }}
 
-    {{ if and (eq $host_port "80") (has (printf "https:%s:%s" $nginx_https_port $container_port) $port_mappings) ($nginx_letsencrypt_enabled) }}
+    {{ if and (eq $host_port "80") (has (printf "https:%s:%s" $openresty_https_port $container_port) $port_mappings) ($openresty_letsencrypt_enabled) }}
     location ^~ /.well-known/acme-challenge/ {
         content_by_lua_block {
             auto_ssl:challenge_server()
@@ -133,10 +133,10 @@ server {
         grpc_pass  grpc://{{ $app }}-{{ $container_port }};
     }
 
-    {{ else if and (eq $host_port "80") (has (printf "https:%s:%s" $nginx_https_port $container_port) $port_mappings) $nginx_ssl_enabled }}
+    {{ else if and (eq $host_port "80") (has (printf "https:%s:%s" $openresty_https_port $container_port) $port_mappings) $openresty_ssl_enabled }}
 
     location / {
-        return 301 https://$host:{{ $nginx_https_port }}$request_uri;
+        return 301 https://$host:{{ $openresty_https_port }}$request_uri;
     }
 
     {{ else }}
@@ -147,22 +147,22 @@ server {
         gzip_min_length         1100;
         gzip_types              text/css text/javascript text/xml text/plain text/x-component application/javascript application/x-javascript application/json application/xml  application/rss+xml font/truetype application/x-font-ttf font/opentype application/vnd.ms-fontobject image/svg+xml;
         gzip_vary               on;
-        proxy_buffer_size       {{ $nginx_proxy_buffer_size }};
-        proxy_buffering         {{ $nginx_proxy_buffering }};
-        proxy_buffers           {{ $nginx_proxy_buffers }};
-        proxy_busy_buffers_size {{ $nginx_proxy_busy_buffer_size }};
+        proxy_buffer_size       {{ $openresty_proxy_buffer_size }};
+        proxy_buffering         {{ $openresty_proxy_buffering }};
+        proxy_buffers           {{ $openresty_proxy_buffers }};
+        proxy_busy_buffers_size {{ $openresty_proxy_busy_buffer_size }};
         proxy_http_version      1.1;
         proxy_pass              http://{{ $app }}-web-{{ $container_port }};
-        proxy_read_timeout      {{ $nginx_proxy_read_timeout }};
+        proxy_read_timeout      {{ $openresty_proxy_read_timeout }};
         proxy_set_header        Connection $http_connection;
         proxy_set_header        Host $http_host;
         proxy_set_header        Upgrade $http_upgrade;
-        proxy_set_header        X-Forwarded-For {{ $nginx_x_forwarded_for_value }};
-        proxy_set_header        X-Forwarded-Port {{ $nginx_x_forwarded_port_value }};
-        proxy_set_header        X-Forwarded-Proto {{ $nginx_x_forwarded_proto_value }};
+        proxy_set_header        X-Forwarded-For {{ $openresty_x_forwarded_for_value }};
+        proxy_set_header        X-Forwarded-Port {{ $openresty_x_forwarded_port_value }};
+        proxy_set_header        X-Forwarded-Proto {{ $openresty_x_forwarded_proto_value }};
         proxy_set_header        X-Request-Start $msec;
-        {{ if $nginx_x_forwarded_ssl }}proxy_set_header       X-Forwarded-Ssl {{ $nginx_x_forwarded_ssl }};{{ end }}
-        {{ if and (eq $scheme "https") $nginx_ssl_enabled }}http2_push_preload      on;{{ end }}
+        {{ if $openresty_x_forwarded_ssl }}proxy_set_header       X-Forwarded-Ssl {{ $openresty_x_forwarded_ssl }};{{ end }}
+        {{ if and (eq $scheme "https") $openresty_ssl_enabled }}http2_push_preload      on;{{ end }}
     }
 
     error_page 400 401 402 403 405 406 407 408 409 410 411 412 413 414 415 416 417 418 420 422 423 424 426 428 429 431 444 449 450 451 /400-error.html;
@@ -185,19 +185,19 @@ server {
 
     {{ end }}
 }
-{{ else if or (and (eq $scheme "grpcs") $nginx_ssl_enabled) (eq $scheme "grpc") }}
+{{ else if or (and (eq $scheme "grpcs") $openresty_ssl_enabled) (eq $scheme "grpc") }}
 server {
-    listen                      [{{ $nginx_bind_address_ipv6 }}]:{{ $host_port }}{{ if eq $scheme "grpcs" }} ssl{{ end }} http2;
-    listen                      {{ if $nginx_bind_address_ipv4 }}{{ $nginx_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if eq $scheme "grpcs" }} ssl{{ end }} http2;
-    {{ if $nginx_domains }}server_name                 {{ $nginx_domains }};{{ end }}
-    access_log                  {{ $nginx_access_log_path }}{{ if and ($nginx_access_log_format) (ne $nginx_access_log_path "off") }} {{ $nginx_access_log_format }}{{ end }};
-    error_log                   {{ $nginx_error_log_path }};
+    listen                      [{{ $openresty_bind_address_ipv6 }}]:{{ $host_port }}{{ if eq $scheme "grpcs" }} ssl{{ end }} http2;
+    listen                      {{ if $openresty_bind_address_ipv4 }}{{ $openresty_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if eq $scheme "grpcs" }} ssl{{ end }} http2;
+    {{ if $openresty_domains }}server_name                 {{ $openresty_domains }};{{ end }}
+    access_log                  {{ $openresty_access_log_path }}{{ if and ($openresty_access_log_format) (ne $openresty_access_log_path "off") }} {{ $openresty_access_log_format }}{{ end }};
+    error_log                   {{ $openresty_error_log_path }};
 
-    {{ if and (eq $scheme "grpcs") $nginx_ssl_enabled }}
-    {{ if $nginx_has_cert }}
+    {{ if and (eq $scheme "grpcs") $openresty_ssl_enabled }}
+    {{ if $openresty_has_cert }}
     ssl_certificate             /etc/nginx/ssl/{{ $app }}-server.crt;
     ssl_certificate_key         /etc/nginx/ssl/{{ $app }}-server.key;
-    {{ else if $nginx_letsencrypt_enabled }}
+    {{ else if $openresty_letsencrypt_enabled }}
     ssl_certificate_by_lua_block {
         auto_ssl:ssl_certificate()
     }
@@ -213,7 +213,7 @@ server {
         grpc_pass  grpc://{{ $app }}-web-{{ $container_port }};
     }
 
-    {{ if $nginx_client_max_body_size }}client_max_body_size {{ $nginx_client_max_body_size }};{{ end }}
+    {{ if $openresty_client_max_body_size }}client_max_body_size {{ $openresty_client_max_body_size }};{{ end }}
     {{ range $label, $base64Value := $first_container.Labels }}
     {{ if hasPrefix (printf "%sinclude-grpc-" $label_prefix) $label }}
     # {{ $label }}
@@ -226,7 +226,7 @@ server {
 {{ end }}
 {{ end }}
 
-{{ if and (ne (env "NGINX_IGNORE_DEFAULT_DOMAIN") "false") (not (hasKey $all_domains "_")) }}
+{{ if and (ne (env "OPENRESTY_IGNORE_DEFAULT_DOMAIN") "false") (not (hasKey $all_domains "_")) }}
 # set a default server block if there is no default (_) server
 server {
     server_name _;

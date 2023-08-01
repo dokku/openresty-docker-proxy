@@ -1,0 +1,6 @@
+{
+    "josegonzalez.unison-sync": {
+        "autoClearConsole": true,
+        "profile": "openresty-docker-proxy"
+    }
+}

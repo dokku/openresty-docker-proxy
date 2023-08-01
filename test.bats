@@ -1,11 +1,11 @@
 #!/usr/bin/env bats
 
 export SYSTEM_NAME="$(uname -s | tr '[:upper:]' '[:lower:]')"
-export TEST_CONTAINER_NAME="nginx-docker-proxy-$(shuf -i 2000-65000 -n 1)"
+export TEST_CONTAINER_NAME="openresty-docker-proxy-$(shuf -i 2000-65000 -n 1)"
 
 setup() {
-  docker container rm -f "nginx-docker-proxy" || true
-  docker image rm -f "nginx-docker-proxy:latest" || true
+  docker container rm -f "openresty-docker-proxy" || true
+  docker image rm -f "openresty-docker-proxy:latest" || true
   if [[ -f "/tmp/cid-file" ]]; then
     docker container rm -f "$(cat /tmp/cid-file)" || true
     rm /tmp/cid-file
@@ -17,8 +17,8 @@ setup() {
 }
 
 teardown() {
-  docker container rm -f "nginx-docker-proxy" || true
-  docker image rm -f "nginx-docker-proxy:latest" || true
+  docker container rm -f "openresty-docker-proxy" || true
+  docker image rm -f "openresty-docker-proxy:latest" || true
   if [[ -f "/tmp/cid-file" ]]; then
     docker container rm -f "$(cat /tmp/cid-file)" || true
     rm /tmp/cid-file
@@ -30,60 +30,60 @@ teardown() {
 }
 
 @test "[build]" {
-  run docker image build -t nginx-docker-proxy:latest .
+  run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
   echo "status: $status"
   assert_success
 }
 
 @test "[start]" {
-  run docker image build -t nginx-docker-proxy:latest .
+  run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name nginx-docker-proxy nginx-docker-proxy:latest
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
   echo "output: $output"
   echo "status: $status"
   assert_success
 
   sleep 3
 
-  run docker inspect nginx-docker-proxy
+  run docker inspect openresty-docker-proxy
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker logs nginx-docker-proxy
+  run docker logs openresty-docker-proxy
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker container rm -f nginx-docker-proxy
+  run docker container rm -f openresty-docker-proxy
   echo "output: $output"
   echo "status: $status"
   assert_success
 }
 
 @test "[start] grpc" {
-  run docker image build -t nginx-docker-proxy:latest .
+  run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name nginx-docker-proxy nginx-docker-proxy:latest
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=nginx.domains=python.example.com --label=nginx.port-mapping=grpc:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=grpc:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
   echo "output: $output"
   echo "status: $status"
   assert_success
 
   sleep 3
 
-  run docker logs nginx-docker-proxy
+  run docker logs openresty-docker-proxy
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -94,7 +94,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it nginx-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -102,41 +102,41 @@ teardown() {
 }
 
 @test "[start] grpcs cert" {
-  run docker image build -t nginx-docker-proxy:latest .
+  run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name nginx-docker-proxy nginx-docker-proxy:latest
-  echo "output: $output"
-  echo "status: $status"
-  assert_success
-
-  sleep 3
-
-  run docker logs nginx-docker-proxy
-  echo "output: $output"
-  echo "status: $status"
-  assert_success
-
-  run docker container exec nginx-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.key /etc/nginx/ssl/python-server.key
-  echo "output: $output"
-  echo "status: $status"
-  assert_success
-
-  run docker container exec nginx-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.crt /etc/nginx/ssl/python-server.crt
-  echo "output: $output"
-  echo "status: $status"
-  assert_success
-
-  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=nginx.domains=python.example.com '--label=nginx.port-mapping=grpcs:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
   echo "output: $output"
   echo "status: $status"
   assert_success
 
   sleep 3
 
-  run docker logs nginx-docker-proxy
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container exec openresty-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.key /etc/nginx/ssl/python-server.key
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container exec openresty-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.crt /etc/nginx/ssl/python-server.crt
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=grpcs:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -147,7 +147,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it nginx-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -155,24 +155,24 @@ teardown() {
 }
 
 @test "[start] grpcs letsencrypt" {
-  run docker image build -t nginx-docker-proxy:latest .
+  run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name nginx-docker-proxy nginx-docker-proxy:latest
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=nginx.domains=python.example.com '--label=nginx.port-mapping=grpcs:443:5000' --label=nginx.letsencrypt=true --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=grpcs:443:5000' --label=openresty.letsencrypt=true --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
   echo "output: $output"
   echo "status: $status"
   assert_success
 
   sleep 3
 
-  run docker logs nginx-docker-proxy
+  run docker logs openresty-docker-proxy
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -183,7 +183,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it nginx-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -191,24 +191,24 @@ teardown() {
 }
 
 @test "[start] http" {
-  run docker image build -t nginx-docker-proxy:latest .
+  run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name nginx-docker-proxy nginx-docker-proxy:latest
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=nginx.domains=python.example.com --label=nginx.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
   echo "output: $output"
   echo "status: $status"
   assert_success
 
   sleep 3
 
-  run docker logs nginx-docker-proxy
+  run docker logs openresty-docker-proxy
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -219,7 +219,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it nginx-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -227,41 +227,41 @@ teardown() {
 }
 
 @test "[start] https cert" {
-  run docker image build -t nginx-docker-proxy:latest .
+  run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name nginx-docker-proxy nginx-docker-proxy:latest
-  echo "output: $output"
-  echo "status: $status"
-  assert_success
-
-  sleep 3
-
-  run docker logs nginx-docker-proxy
-  echo "output: $output"
-  echo "status: $status"
-  assert_success
-
-  run docker container exec nginx-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.key /etc/nginx/ssl/python-server.key
-  echo "output: $output"
-  echo "status: $status"
-  assert_success
-
-  run docker container exec nginx-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.crt /etc/nginx/ssl/python-server.crt
-  echo "output: $output"
-  echo "status: $status"
-  assert_success
-
-  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=nginx.domains=python.example.com '--label=nginx.port-mapping=http:80:5000 https:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
   echo "output: $output"
   echo "status: $status"
   assert_success
 
   sleep 3
 
-  run docker logs nginx-docker-proxy
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container exec openresty-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.key /etc/nginx/ssl/python-server.key
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container exec openresty-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.crt /etc/nginx/ssl/python-server.crt
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -272,7 +272,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it nginx-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -280,24 +280,24 @@ teardown() {
 }
 
 @test "[start] https letsencrypt" {
-  run docker image build -t nginx-docker-proxy:latest .
+  run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name nginx-docker-proxy nginx-docker-proxy:latest
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=nginx.domains=python.example.com '--label=nginx.port-mapping=http:80:5000 https:443:5000' --label=nginx.letsencrypt=true --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=openresty.letsencrypt=true --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
   echo "output: $output"
   echo "status: $status"
   assert_success
 
   sleep 3
 
-  run docker logs nginx-docker-proxy
+  run docker logs openresty-docker-proxy
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -308,13 +308,13 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it nginx-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
   assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/https.letsencrypt.tmpl)"
 
-  run docker run --rm --cidfile /tmp/cid-file-2 --platform linux/amd64 '--label=nginx.domains=python2.example.com _' '--label=nginx.port-mapping=http:80:5000 https:443:5000' --label=nginx.letsencrypt=true --label=com.dokku.app-name=python2 --label=com.dokku.process-type=web --name "${TEST_CONTAINER_NAME}_2" -d dokku/python-sample /start web
+  run docker run --rm --cidfile /tmp/cid-file-2 --platform linux/amd64 '--label=openresty.domains=python2.example.com _' '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=openresty.letsencrypt=true --label=com.dokku.app-name=python2 --label=com.dokku.process-type=web --name "${TEST_CONTAINER_NAME}_2" -d dokku/python-sample /start web
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -327,7 +327,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it nginx-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
