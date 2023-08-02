@@ -113,13 +113,6 @@ server {
     keepalive_timeout           70;
     {{ end }}
 
-    {{ range $label, $base64Value := $first_container.Labels }}
-    {{ if hasPrefix (printf "%s%s" $label_prefix "include-http-") $label }}
-    # {{ $label }}
-{{ indent 4 (b64dec $base64Value) }}
-    {{ end }}
-    {{ end }}
-
     {{ if $openresty_client_max_body_size }}client_max_body_size {{ $openresty_client_max_body_size }};{{ end }}
 
     {{ if and (eq $host_port "80") (has (printf "https:%s:%s" $openresty_https_port $container_port) $port_mappings) ($openresty_letsencrypt_enabled) }}
@@ -130,13 +123,14 @@ server {
     }
     {{ end }}
 
-    {{ if or (eq $scheme "grpc") (eq $scheme "grpcs")}}
+    {{ if and (eq $host_port "80") (has (printf "https:%s:%s" $openresty_https_port $container_port) $port_mappings) $openresty_ssl_enabled }}
 
-    location    / {
-        grpc_pass  grpc://{{ $app }}-{{ $container_port }};
-    }
-
-    {{ else if and (eq $host_port "80") (has (printf "https:%s:%s" $openresty_https_port $container_port) $port_mappings) $openresty_ssl_enabled }}
+    {{ range $label, $base64Value := $first_container.Labels }}
+    {{ if hasPrefix (printf "%s%s" $label_prefix "include-http-") $label }}
+    # {{ trimPrefix (printf "%s%s" $label_prefix "include-http-") $label }}
+{{ indent 4 (b64dec $base64Value) }}
+    {{ end }}
+    {{ end }}
 
     location / {
         return 301 https://$host:{{ $openresty_https_port }}$request_uri;
@@ -189,6 +183,13 @@ server {
         internal;
     }
 
+    {{ range $label, $base64Value := $first_container.Labels }}
+    {{ if hasPrefix (printf "%s%s" $label_prefix "include-http-") $label }}
+    # {{ trimPrefix (printf "%s%s" $label_prefix "include-http-") $label }}
+{{ indent 4 (b64dec $base64Value) }}
+    {{ end }}
+    {{ end }}
+
     {{ end }}
 }
 {{ else if or (and (eq $scheme "grpcs") $openresty_ssl_enabled) (eq $scheme "grpc") }}
@@ -222,7 +223,7 @@ server {
     {{ if $openresty_client_max_body_size }}client_max_body_size {{ $openresty_client_max_body_size }};{{ end }}
     {{ range $label, $base64Value := $first_container.Labels }}
     {{ if hasPrefix (printf "%s%s" $label_prefix "include-grpc-") $label }}
-    # {{ $label }}
+    # {{ trimPrefix (printf "%s%s" $label_prefix "include-grpc-") $label }}
 {{ indent 4 (b64dec $base64Value) }}
     {{ end }}
     {{ end }}
