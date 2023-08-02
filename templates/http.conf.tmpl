@@ -89,7 +89,7 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 server {
     listen                      [{{ $openresty_bind_address_ipv6 }}]:{{ $host_port }}{{ if and (eq $scheme "https") $openresty_ssl_enabled }} ssl http2{{ end }};
     listen                      {{ if $openresty_bind_address_ipv4 }}{{ $openresty_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if and (eq $scheme "https") $openresty_ssl_enabled }} ssl http2{{ end }};
-    {{ if $openresty_domains }}server_name                 {{ $openresty_domains }};{{ end }}
+    {{ if ne $openresty_domains "" }}server_name                 {{ $openresty_domains }};{{ end }}
     access_log                  {{ $openresty_access_log_path }}{{ if and ($openresty_access_log_format) (ne $openresty_access_log_path "off") }} {{ $openresty_access_log_format }}{{ end }};
     error_log                   {{ $openresty_error_log_path }};
 
@@ -189,7 +189,7 @@ server {
 server {
     listen                      [{{ $openresty_bind_address_ipv6 }}]:{{ $host_port }}{{ if eq $scheme "grpcs" }} ssl{{ end }} http2;
     listen                      {{ if $openresty_bind_address_ipv4 }}{{ $openresty_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if eq $scheme "grpcs" }} ssl{{ end }} http2;
-    {{ if $openresty_domains }}server_name                 {{ $openresty_domains }};{{ end }}
+    {{ if ne $openresty_domains "" }}server_name                 {{ $openresty_domains }};{{ end }}
     access_log                  {{ $openresty_access_log_path }}{{ if and ($openresty_access_log_format) (ne $openresty_access_log_path "off") }} {{ $openresty_access_log_format }}{{ end }};
     error_log                   {{ $openresty_error_log_path }};
 
