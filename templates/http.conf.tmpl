@@ -21,8 +21,8 @@
 {{ range $process_type, $containers := groupByLabel $appContainers $process_label }}
 {{ $_ := set $all_app_containers $process_type $containers }}
 {{ $first_container := index $containers 0 }}
-{{ $initial_network := when (contains $first_container.Labels (printf "%sinitial-network" $label_prefix)) (index $first_container.Labels (printf "%sinitial-network" $label_prefix)) $default_network }}
-{{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%sport-mapping" $label_prefix)) (index $first_container.Labels (printf "%sport-mapping" $label_prefix)) "http:80:5000")) " " }}
+{{ $initial_network := when (contains $first_container.Labels (printf "%s%s" $label_prefix "initial-network")) (index $first_container.Labels (printf "%s%s" $label_prefix "initial-network")) $default_network }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%s%s" $label_prefix "port-mapping")) (index $first_container.Labels (printf "%s%s" $label_prefix "port-mapping")) "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
 {{ if or (eq $scheme "http") (eq $scheme "https") (eq $scheme "grpc") (eq $scheme "grpcs") }}
@@ -51,25 +51,25 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ if (contains $all_app_containers $web_process) }}
 {{ $web_containers := get $all_app_containers $web_process }}
 {{ $first_container := index $web_containers 0 }}
-{{ $openresty_bind_address_ipv4 := when (contains $first_container.Labels (printf "%sbind-address-ipv4" $label_prefix)) (index $first_container.Labels (printf "%sbind-address-ipv4" $label_prefix)) "" }}
-{{ $openresty_bind_address_ipv6 := when (contains $first_container.Labels (printf "%sbind-address-ipv6" $label_prefix)) (index $first_container.Labels (printf "%sbind-address-ipv6" $label_prefix)) "::" }}
-{{ $openresty_proxy_read_timeout := when (contains $first_container.Labels (printf "%sproxy-read-timeout" $label_prefix)) (index $first_container.Labels (printf "%sproxy-read-timeout" $label_prefix)) "60s" }}
-{{ $openresty_proxy_buffering := when (contains $first_container.Labels (printf "%sproxy-buffering" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffering" $label_prefix)) "on" }}
-{{ $openresty_proxy_buffer_size := when (contains $first_container.Labels (printf "%sproxy-buffer-size" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffer-size" $label_prefix)) (env "OPENRESTY_OS_PAGESIZE") }}
-{{ $openresty_proxy_buffers := when (contains $first_container.Labels (printf "%sproxy-buffers" $label_prefix)) (index $first_container.Labels (printf "%sproxy-buffers" $label_prefix)) (printf "8 %s" (env "OPENRESTY_OS_PAGESIZE")) }}
-{{ $openresty_proxy_busy_buffer_size := when (contains $first_container.Labels (printf "%sproxy-busy-buffer-size" $label_prefix)) (index $first_container.Labels (printf "%sproxy-busy-buffer-size" $label_prefix)) (mul 2 (atoi (env "OPENRESTY_OS_PAGESIZE"))) }}
-{{ $openresty_x_forwarded_for_value := when (contains $first_container.Labels (printf "%sx-forwarded-for-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-for-value" $label_prefix)) "$remote_addr" }}
-{{ $openresty_x_forwarded_port_value := when (contains $first_container.Labels (printf "%sx-forwarded-port-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-port-value" $label_prefix)) "$server_port" }}
-{{ $openresty_x_forwarded_proto_value := when (contains $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) "$scheme" }}
-{{ $openresty_x_forwarded_ssl := when (contains $first_container.Labels (printf "%sx-forwarded-proto-value" $label_prefix)) (index $first_container.Labels (printf "%sx-forwarded-ssl" $label_prefix)) "" }}
-{{ $openresty_client_max_body_size := when (contains $first_container.Labels (printf "%sclient-max-body-size" $label_prefix)) (index $first_container.Labels (printf "%sclient-max-body-size" $label_prefix)) "" }}
-{{ $openresty_access_log_path := when (contains $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-path" $label_prefix)) (printf "/var/log/nginx/%s-access.log" $app) }}
-{{ $openresty_access_log_format := when (contains $first_container.Labels (printf "%saccess-log-format" $label_prefix)) (index $first_container.Labels (printf "%saccess-log-format" $label_prefix)) "" }}
-{{ $openresty_error_log_path := when (contains $first_container.Labels (printf "%serror-log-path" $label_prefix)) (index $first_container.Labels (printf "%serror-log-path" $label_prefix)) (printf "/var/log/nginx/%s-error.log" $app) }}
-{{ $openresty_domains := when (contains $first_container.Labels (printf "%sdomains" $label_prefix)) (index $first_container.Labels (printf "%sdomains" $label_prefix)) "" }}
+{{ $openresty_bind_address_ipv4 :=       when (contains $first_container.Labels (printf "%s%s" $label_prefix "bind-address-ipv4"))       (index $first_container.Labels (printf "%s%s" $label_prefix "bind-address-ipv4")) "" }}
+{{ $openresty_bind_address_ipv6 :=       when (contains $first_container.Labels (printf "%s%s" $label_prefix "bind-address-ipv6"))       (index $first_container.Labels (printf "%s%s" $label_prefix "bind-address-ipv6")) "::" }}
+{{ $openresty_proxy_read_timeout :=      when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-read-timeout"))      (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-read-timeout")) "60s" }}
+{{ $openresty_proxy_buffering :=         when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffering"))         (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffering")) "on" }}
+{{ $openresty_proxy_buffer_size :=       when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffer-size"))       (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffer-size")) (env "OPENRESTY_OS_PAGESIZE") }}
+{{ $openresty_proxy_buffers :=           when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffers"))           (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffers")) (printf "8 %s" (env "OPENRESTY_OS_PAGESIZE")) }}
+{{ $openresty_proxy_busy_buffer_size :=  when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-busy-buffer-size"))  (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-busy-buffer-size")) (mul 2 (atoi (env "OPENRESTY_OS_PAGESIZE"))) }}
+{{ $openresty_x_forwarded_for_value :=   when (contains $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-for-value"))   (index $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-for-value")) "$remote_addr" }}
+{{ $openresty_x_forwarded_port_value :=  when (contains $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-port-value"))  (index $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-port-value")) "$server_port" }}
+{{ $openresty_x_forwarded_proto_value := when (contains $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-proto-value")) (index $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-proto-value")) "$scheme" }}
+{{ $openresty_x_forwarded_ssl :=         when (contains $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-proto-value")) (index $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-ssl")) "" }}
+{{ $openresty_client_max_body_size :=    when (contains $first_container.Labels (printf "%s%s" $label_prefix "client-max-body-size"))    (index $first_container.Labels (printf "%s%s" $label_prefix "client-max-body-size")) "" }}
+{{ $openresty_access_log_path :=         when (contains $first_container.Labels (printf "%s%s" $label_prefix "access-log-path"))         (index $first_container.Labels (printf "%s%s" $label_prefix "access-log-path")) (printf "/var/log/nginx/%s-access.log" $app) }}
+{{ $openresty_access_log_format :=       when (contains $first_container.Labels (printf "%s%s" $label_prefix "access-log-format"))       (index $first_container.Labels (printf "%s%s" $label_prefix "access-log-format")) "" }}
+{{ $openresty_error_log_path :=          when (contains $first_container.Labels (printf "%s%s" $label_prefix "error-log-path"))          (index $first_container.Labels (printf "%s%s" $label_prefix "error-log-path")) (printf "/var/log/nginx/%s-error.log" $app) }}
+{{ $openresty_domains :=                 when (contains $first_container.Labels (printf "%s%s" $label_prefix "domains"))                 (index $first_container.Labels (printf "%s%s" $label_prefix "domains")) "" }}
 {{ $openresty_domains_list := splitList " " $openresty_domains }}
-{{ $openresty_https_port := when (contains $first_container.Labels (printf "%shttps-port" $label_prefix)) (index $first_container.Labels (printf "%shttps-port" $label_prefix)) "443" }}
-{{ $openresty_letsencrypt := when (contains $first_container.Labels (printf "%sletsencrypt" $label_prefix)) (index $first_container.Labels (printf "%sletsencrypt" $label_prefix)) "" }}
+{{ $openresty_https_port :=              when (contains $first_container.Labels (printf "%s%s" $label_prefix "https-port"))              (index $first_container.Labels (printf "%s%s" $label_prefix "https-port")) "443" }}
+{{ $openresty_letsencrypt :=             when (contains $first_container.Labels (printf "%s%s" $label_prefix "letsencrypt"))             (index $first_container.Labels (printf "%s%s" $label_prefix "letsencrypt")) "" }}
 {{ $openresty_letsencrypt_enabled := eq $openresty_letsencrypt "true" }}
 {{ $openresty_has_cert := exists (printf "/etc/nginx/ssl/%s-server.key" $app) }}
 {{ $openresty_ssl_enabled := or ($openresty_has_cert) ($openresty_letsencrypt_enabled) }}
@@ -80,7 +80,7 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
     {{ end }}
 {{ end }}
 
-{{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%sport-mapping" $label_prefix)) (index $first_container.Labels (printf "%sport-mapping" $label_prefix)) "http:80:5000")) " " }}
+{{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%s%s" $label_prefix "port-mapping")) (index $first_container.Labels (printf "%s%s" $label_prefix "port-mapping")) "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
 {{ $host_port := index (split $port_map ":") 1 }}
@@ -111,7 +111,7 @@ server {
     {{ end }}
 
     {{ range $label, $base64Value := $first_container.Labels }}
-    {{ if hasPrefix (printf "%sinclude-http-" $label_prefix) $label }}
+    {{ if hasPrefix (printf "%s%s" $label_prefix "include-http-") $label }}
     # {{ $label }}
 {{ indent 4 (b64dec $base64Value) }}
     {{ end }}
@@ -215,7 +215,7 @@ server {
 
     {{ if $openresty_client_max_body_size }}client_max_body_size {{ $openresty_client_max_body_size }};{{ end }}
     {{ range $label, $base64Value := $first_container.Labels }}
-    {{ if hasPrefix (printf "%sinclude-grpc-" $label_prefix) $label }}
+    {{ if hasPrefix (printf "%s%s" $label_prefix "include-grpc-") $label }}
     # {{ $label }}
 {{ indent 4 (b64dec $base64Value) }}
     {{ end }}
