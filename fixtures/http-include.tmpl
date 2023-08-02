@@ -1,0 +1,72 @@
+upstream python-web-5000 {
+    server VAR_IP_ADDRESS:5000;
+}
+server {
+    listen                      [::]:80;
+    listen                      80;
+    server_name                 python.example.com;
+    access_log                  /var/log/nginx/python-access.log;
+    error_log                   /var/log/nginx/python-error.log;
+    location / {
+        gzip                    on;
+        gzip_buffers            4 32k;
+        gzip_comp_level         6;
+        gzip_min_length         1100;
+        gzip_types              text/css text/javascript text/xml text/plain text/x-component application/javascript application/x-javascript application/json application/xml  application/rss+xml font/truetype application/x-font-ttf font/opentype application/vnd.ms-fontobject image/svg+xml;
+        gzip_vary               on;
+        proxy_buffer_size       4096;
+        proxy_buffering         on;
+        proxy_buffers           8 4096;
+        proxy_busy_buffers_size 8192;
+        proxy_connect_timeout   60s;
+        proxy_http_version      1.1;
+        proxy_pass              http://python-web-5000;
+        proxy_read_timeout      60s;
+        proxy_send_timeout      60s;
+        send_timeout            60s;
+        proxy_set_header        Connection $http_connection;
+        proxy_set_header        Host $http_host;
+        proxy_set_header        Upgrade $http_upgrade;
+        proxy_set_header        X-Forwarded-For $remote_addr;
+        proxy_set_header        X-Forwarded-Port $server_port;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        proxy_set_header        X-Request-Start $msec;
+    }
+    error_page 400 401 402 403 405 406 407 408 409 410 411 412 413 414 415 416 417 418 420 422 423 424 426 428 429 431 444 449 450 451 /400-error.html;
+    location /400-error.html {
+        root /etc/nginx/errors;
+        internal;
+    }
+    error_page 404 /404-error.html;
+    location /404-error.html {
+        root /etc/nginx/errors;
+        internal;
+    }
+    error_page 500 501 502 503 504 505 506 507 508 509 510 511 /500-error.html;
+    location /500-error.html {
+        root /etc/nginx/errors;
+        internal;
+    }
+    # v1.conf
+    location ~* ^/v1/ {
+        rewrite ^/v1/(.*) /$1 break;
+        proxy_pass https://rest.orcascan.com;
+    }
+}
+# set a default server block if there is no default (_) server
+server {
+    server_name _;
+    listen      80 default_server;
+    access_log  /var/log/nginx/default-server-80-access.log;
+    error_log   /var/log/nginx/default-server-80-error.log;
+    return      404;
+}
+server {
+    listen              443 ssl;
+    server_name         _;
+    ssl_certificate     /etc/ssl/resty-auto-ssl-fallback.crt;
+    ssl_certificate_key /etc/ssl/resty-auto-ssl-fallback.key;
+    access_log          /var/log/nginx/default-server-443-access.log;
+    error_log           /var/log/nginx/default-server-443-error.log;
+    return              404;
+}
