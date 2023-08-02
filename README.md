@@ -140,9 +140,21 @@ Sets the number of the buffers in proxy_buffers used for reading the first part 
 
 Sets the size of the buffer proxy_busy_buffer_size used for reading the first part of the response received from the proxied server. By default proxy busy buffer size is set as twice the pagesize.
 
+#### `openresty.proxy-connecting-timeout`
+
+Defines a timeout for connect to a proxied server.
+
 #### `openresty.proxy-read-timeout`
 
 Defines a timeout for reading a response from the proxied server.
+
+#### `openresty.proxy-send-timeout`
+
+Defines a timeout for sending a request to the proxied server.
+
+#### `openresty.send-timeout`
+
+Defines a timeout for sending a response to the client.
 
 #### `openresty.x-forwarded-for-value`
 

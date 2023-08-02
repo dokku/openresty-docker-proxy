@@ -53,11 +53,14 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ $first_container := index $web_containers 0 }}
 {{ $openresty_bind_address_ipv4 :=       when (contains $first_container.Labels (printf "%s%s" $label_prefix "bind-address-ipv4"))       (index $first_container.Labels (printf "%s%s" $label_prefix "bind-address-ipv4")) "" }}
 {{ $openresty_bind_address_ipv6 :=       when (contains $first_container.Labels (printf "%s%s" $label_prefix "bind-address-ipv6"))       (index $first_container.Labels (printf "%s%s" $label_prefix "bind-address-ipv6")) "::" }}
+{{ $openresty_proxy_connect_timeout :=   when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-connect-timeout"))   (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-connect-timeout")) "60s" }}
 {{ $openresty_proxy_read_timeout :=      when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-read-timeout"))      (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-read-timeout")) "60s" }}
+{{ $openresty_proxy_send_timeout :=      when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-send-timeout"))      (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-send-timeout")) "60s" }}
 {{ $openresty_proxy_buffering :=         when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffering"))         (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffering")) "on" }}
 {{ $openresty_proxy_buffer_size :=       when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffer-size"))       (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffer-size")) (env "OPENRESTY_OS_PAGESIZE") }}
 {{ $openresty_proxy_buffers :=           when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffers"))           (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-buffers")) (printf "8 %s" (env "OPENRESTY_OS_PAGESIZE")) }}
 {{ $openresty_proxy_busy_buffer_size :=  when (contains $first_container.Labels (printf "%s%s" $label_prefix "proxy-busy-buffer-size"))  (index $first_container.Labels (printf "%s%s" $label_prefix "proxy-busy-buffer-size")) (mul 2 (atoi (env "OPENRESTY_OS_PAGESIZE"))) }}
+{{ $openresty_send_timeout :=            when (contains $first_container.Labels (printf "%s%s" $label_prefix "send-timeout"))            (index $first_container.Labels (printf "%s%s" $label_prefix "send-timeout")) "60s" }}
 {{ $openresty_x_forwarded_for_value :=   when (contains $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-for-value"))   (index $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-for-value")) "$remote_addr" }}
 {{ $openresty_x_forwarded_port_value :=  when (contains $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-port-value"))  (index $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-port-value")) "$server_port" }}
 {{ $openresty_x_forwarded_proto_value := when (contains $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-proto-value")) (index $first_container.Labels (printf "%s%s" $label_prefix "x-forwarded-proto-value")) "$scheme" }}
@@ -151,9 +154,12 @@ server {
         proxy_buffering         {{ $openresty_proxy_buffering }};
         proxy_buffers           {{ $openresty_proxy_buffers }};
         proxy_busy_buffers_size {{ $openresty_proxy_busy_buffer_size }};
+        proxy_connect_timeout   {{ $openresty_proxy_connect_timeout }};
         proxy_http_version      1.1;
         proxy_pass              http://{{ $app }}-web-{{ $container_port }};
         proxy_read_timeout      {{ $openresty_proxy_read_timeout }};
+        proxy_send_timeout      {{ $openresty_proxy_send_timeout }};
+        send_timeout            {{ $openresty_send_timeout }};
         proxy_set_header        Connection $http_connection;
         proxy_set_header        Host $http_host;
         proxy_set_header        Upgrade $http_upgrade;
