@@ -65,8 +65,8 @@ server {
 server {
     server_name _;
     listen      80 default_server;
-    access_log  /var/log/nginx/default-server-80-access.log
-    error_log   /var/log/nginx/default-server-80-error.log
+    access_log  /var/log/nginx/default-server-80-access.log;
+    error_log   /var/log/nginx/default-server-80-error.log;
     return      404;
 }
 server {
@@ -74,7 +74,7 @@ server {
     server_name         _;
     ssl_certificate     /etc/ssl/resty-auto-ssl-fallback.crt;
     ssl_certificate_key /etc/ssl/resty-auto-ssl-fallback.key;
-    access_log          /var/log/nginx/default-server-443-access.log
-    error_log           /var/log/nginx/default-server-443-error.log
+    access_log          /var/log/nginx/default-server-443-access.log;
+    error_log           /var/log/nginx/default-server-443-error.log;
     return              404;
 }
