@@ -102,7 +102,11 @@ Port treated as https when parsing port mappings.
 
 #### `openresty.include-grpc-*`
 
+#### `openresty.include-location-grpc-*`
+
 #### `openresty.include-http-*`
+
+#### `openresty.include-location-http-*`
 
 #### `openresty.include-tcp-*`
 
