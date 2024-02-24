@@ -4,7 +4,7 @@ set -eo pipefail
 main() {
   while true; do
     logrotate --force /etc/logrotate.d/openresty
-    sleep 14400
+    sleep 172800
   done
 }
 
