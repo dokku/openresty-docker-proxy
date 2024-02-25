@@ -14,6 +14,7 @@ main() {
 
   mkdir -p /etc/resty-auto-ssl/storage
   chown www-data:www-data /etc/resty-auto-ssl/storage
+  chown -R www-data:www-data /etc/resty-auto-ssl
 
   echo "====> Starting"
   exec "$@"
