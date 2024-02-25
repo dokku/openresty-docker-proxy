@@ -25,3 +25,10 @@ dest = "/etc/resty-auto-ssl/letsencrypt/conf.d/custom.sh"
 watch = true
 wait = "500ms:2s"
 notifycmd = "/etc/init.d/openresty reload"
+
+[[config]]
+template = "/app/templates/allow_domain.lua.tmpl"
+dest = "/etc/nginx/lua/allow_domain.lua"
+watch = true
+wait = "500ms:2s"
+notifycmd = "/etc/init.d/openresty reload"

@@ -1,0 +1,7 @@
+module('allow_domain', package.seeall)
+
+-- allowed is a function that returns true if the domain is allowed to have letsencrypt certificates issued
+function allowed(domain)
+{{- $default_allowed := b64enc ("return true") }}
+{{ indent 4 (b64dec (default $default_allowed (env "OPENRESTY_LETSENCRYPT_ALLOWED_DOMAINS_FUNC_BASE64"))) }}
+end
