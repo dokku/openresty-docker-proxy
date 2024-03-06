@@ -50,23 +50,25 @@ RUN apt-get update && \
     apt-get -y --purge autoremove && \
     apt-get -y clean autoclean && \
     rm -rf \
-        /tmp/* \
-        /var/cache/apk/* \
-        /var/tmp/* \
-        /var/lib/apt/lists/* \
-        /var/log/alternatives.log \
-        /var/log/apt/ \
-        /var/log/bootstrap.log \
-        /var/log/btmp \
-        /var/log/dpkg.log \
-        /var/log/faillog \
-        /var/log/fsck/ \
-        /var/log/lastlog \
-        /var/log/wtmp \
-        /root/.cache \
+    /tmp/* \
+    /var/cache/apk/* \
+    /var/tmp/* \
+    /var/lib/apt/lists/* \
+    /var/log/alternatives.log \
+    /var/log/apt/ \
+    /var/log/bootstrap.log \
+    /var/log/btmp \
+    /var/log/dpkg.log \
+    /var/log/faillog \
+    /var/log/fsck/ \
+    /var/log/lastlog \
+    /var/log/wtmp \
+    /root/.cache \
     && \
+    mkdir -p /etc/nginx/lua && \
     find /var/cache/ ! -type d -exec rm '{}' \;
 
+COPY config/allow_domain.lua /etc/nginx/lua/allow_domain.lua
 COPY config/logrotate /etc/logrotate.d/openresty
 COPY config/init.d /etc/init.d/openresty
 COPY config/nginx.conf /etc/nginx/nginx.conf

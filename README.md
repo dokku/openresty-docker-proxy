@@ -30,6 +30,12 @@ When `true`, all requests to a domain where there is a port listener will be ign
 
 The default prefix to use when looking up labels. All examples below assume the default label prefix.
 
+#### `OPENRESTY_LETSENCRYPT_ALLOWED_DOMAINS_FUNC_BASE64`
+
+> default: `return true`
+
+The body of a function that returns whether or not the variable `domain` containing a domain name is allowed to have a letsencrypt ssl certificate provisioned.
+
 #### `OPENRESTY_LETSENCRYPT_EMAIL`
 
 > default: `` (none)
