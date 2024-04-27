@@ -11,7 +11,7 @@ RUN git clone https://github.com/nginx-proxy/forego . \
     && go clean -cache \
     && mv forego /usr/local/bin/forego
 
-FROM ubuntu:22.04 as downloads
+FROM ubuntu:24.04 as downloads
 
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -28,7 +28,7 @@ RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/dehydrated-io/dehydrat
     mv dehydrated-${DEHYDRATED_VERSION}/dehydrated /usr/local/bin/dehydrated && \
     chmod +x /usr/local/bin/dehydrated
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && \
