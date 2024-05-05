@@ -18,7 +18,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates=* curl=* && \
     rm -rf /var/lib/apt/lists/*
 
-ARG DOCKER_GEN_VERSION=0.10.6
+ARG DOCKER_GEN_VERSION=0.13.0
 RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/nginx-proxy/docker-gen/releases/download/${DOCKER_GEN_VERSION}/docker-gen-linux-$(dpkg --print-architecture)-${DOCKER_GEN_VERSION}.tar.gz" && \
     tar xvzf /tmp/docker-gen.tar.gz -C /usr/local/bin
 
