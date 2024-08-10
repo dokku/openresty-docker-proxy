@@ -1,4 +1,4 @@
-FROM golang:1.22.5 as forego
+FROM golang:1.22.6 as forego
 
 ARG FOREGO_VERSION=v0.17.2
 
