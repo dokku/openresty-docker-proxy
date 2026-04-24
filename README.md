@@ -78,6 +78,39 @@ The default os page size to base default proxy values on.
 
 The format of the openresty access log for the app.
 
+#### `openresty.access-satisfy`
+
+> default: `all`
+
+Controls how IP restriction (`allowed-ips`) interacts with HTTP Basic Authentication (`basic-auth`) when both are set. Possible values:
+
+- `all` (default): Both IP restriction AND basic auth must pass.
+- `any`: Either a matching IP OR valid basic auth credentials will grant access.
+
+This label only takes effect when both `openresty.allowed-ips` and `openresty.basic-auth` are set.
+
+#### `openresty.allowed-ips`
+
+Restricts access to the app based on client IP address. The value is a space-separated list of IPv4 addresses and CIDR ranges. Requests from non-matching IPs receive a `403 Forbidden` response.
+
+Only IPv4 addresses and CIDR ranges are currently supported. The client IP is determined by `remote_addr`, which is the direct connecting client's IP address. If this proxy runs behind another load balancer, configure `set_real_ip_from` via an include label.
+
+Example usage:
+
+```bash
+# Allow only specific IPs
+docker run --label='openresty.allowed-ips=10.0.0.0/8 192.168.1.100' myimage
+
+# Allow specific IPs AND require basic auth (satisfy all, the default)
+docker run --label='openresty.allowed-ips=10.0.0.0/8' \
+           --label='openresty.basic-auth=myuser:{SHA}hash' myimage
+
+# Allow specific IPs OR basic auth (satisfy any)
+docker run --label='openresty.allowed-ips=10.0.0.0/8' \
+           --label='openresty.basic-auth=myuser:{SHA}hash' \
+           --label='openresty.access-satisfy=any' myimage
+```
+
 #### `openresty.basic-auth`
 
 Enables HTTP Basic Authentication on the app's location block. The value is a space-separated list of `user:password_hash` entries.
