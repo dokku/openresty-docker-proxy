@@ -30,6 +30,9 @@ RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/dehydrated-io/dehydrat
 
 FROM ubuntu:24.04
 
+ARG OPENRESTY_VERSION=1.29.2.3-1~jammy1
+ARG LUA_RESTY_AUTO_SSL_VERSION=0.13.1-1
+
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -39,8 +42,8 @@ RUN apt-get update && \
     (if [ "$(dpkg --print-architecture)" = "arm64" ]; then echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/arm64/ubuntu jammy main" > /etc/apt/sources.list.d/openresty.list; fi) && \
     cat /etc/apt/sources.list.d/openresty.list && \
     apt-get update && \
-    apt-get install -y --no-install-recommends openresty=* openresty-opm=* && \
-    luarocks install lua-resty-auto-ssl && \
+    apt-get install -y --no-install-recommends openresty=${OPENRESTY_VERSION} openresty-opm=${OPENRESTY_VERSION} && \
+    luarocks install lua-resty-auto-ssl ${LUA_RESTY_AUTO_SSL_VERSION} && \
     ln -sf /usr/local/openresty/nginx/conf /etc/nginx && \
     mkdir -p /etc/resty-auto-ssl/letsencrypt/conf.d /etc/nginx/ssl /etc/nginx/stream-sites-enabled /etc/nginx/sites-enabled /var/log/nginx && \
     chown www-data /etc/resty-auto-ssl/ && \
