@@ -93,7 +93,7 @@ This label only takes effect when both `openresty.allowed-ips` and `openresty.ba
 
 Restricts access to the app based on client IP address. The value is a space-separated list of IPv4 addresses and CIDR ranges. Requests from non-matching IPs receive a `403 Forbidden` response.
 
-Only IPv4 addresses and CIDR ranges are currently supported. The client IP is determined by `remote_addr`, which is the direct connecting client's IP address. If this proxy runs behind another load balancer, configure `set_real_ip_from` via an include label.
+Only IPv4 addresses and CIDR ranges are currently supported. The client IP is determined by `remote_addr` by default, which is the direct connecting client's IP address. If this proxy runs behind another load balancer, use `openresty.allowed-ips-source` to specify an alternative IP source such as `x-forwarded-for` or `x-real-ip`.
 
 Example usage:
 
@@ -109,6 +109,34 @@ docker run --label='openresty.allowed-ips=10.0.0.0/8' \
 docker run --label='openresty.allowed-ips=10.0.0.0/8' \
            --label='openresty.basic-auth=myuser:{SHA}hash' \
            --label='openresty.access-satisfy=any' myimage
+```
+
+#### `openresty.allowed-ips-source`
+
+> default: `remote_addr`
+
+Controls which source is used to determine the client IP address for `allowed-ips` checks. This is useful when the proxy sits behind another load balancer where `remote_addr` would be the load balancer's IP rather than the real client IP.
+
+Possible values:
+
+- `remote_addr` (default): Uses the direct connecting client's IP address (`ngx.var.remote_addr`).
+- `x-forwarded-for`: Uses the first IP from the `X-Forwarded-For` header. This is typically the original client IP when behind a single load balancer.
+- `x-real-ip`: Uses the `X-Real-IP` header, commonly set by upstream proxies like nginx.
+
+This label only takes effect when `openresty.allowed-ips` is also set.
+
+**Important**: When using `x-forwarded-for` or `x-real-ip`, ensure your upstream load balancer sets these headers correctly. If the header is missing, the request will be denied with `403 Forbidden`.
+
+Example usage:
+
+```bash
+# Behind a load balancer that sets X-Forwarded-For
+docker run --label='openresty.allowed-ips=10.0.0.0/8' \
+           --label='openresty.allowed-ips-source=x-forwarded-for' myimage
+
+# Behind a proxy that sets X-Real-IP
+docker run --label='openresty.allowed-ips=10.0.0.0/8' \
+           --label='openresty.allowed-ips-source=x-real-ip' myimage
 ```
 
 #### `openresty.basic-auth`

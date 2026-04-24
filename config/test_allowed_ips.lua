@@ -206,6 +206,104 @@ test("Loopback: 127.0.0.1 match", function()
     assert_eq(true, allowed_ips.is_allowed("127.0.0.1"), "should match loopback")
 end)
 
+-- ip_source: x-forwarded-for tests
+
+test("x-forwarded-for: single IP match", function()
+    reset_mocks()
+    ngx.var.remote_addr = "10.0.0.1"
+    ngx.var.http_x_forwarded_for = "192.168.1.100"
+    assert_eq(true, allowed_ips.is_allowed("192.168.1.0/24", "x-forwarded-for"), "should match XFF IP")
+end)
+
+test("x-forwarded-for: uses first IP from comma-separated list", function()
+    reset_mocks()
+    ngx.var.http_x_forwarded_for = "192.168.1.100, 10.0.0.1, 172.16.0.1"
+    assert_eq(true, allowed_ips.is_allowed("192.168.1.100", "x-forwarded-for"), "should match first IP in XFF")
+end)
+
+test("x-forwarded-for: trims whitespace from first IP", function()
+    reset_mocks()
+    ngx.var.http_x_forwarded_for = " 192.168.1.100 , 10.0.0.1"
+    assert_eq(true, allowed_ips.is_allowed("192.168.1.100", "x-forwarded-for"), "should trim whitespace from XFF IP")
+end)
+
+test("x-forwarded-for: no match returns false", function()
+    reset_mocks()
+    ngx.var.http_x_forwarded_for = "8.8.8.8"
+    assert_eq(false, allowed_ips.is_allowed("192.168.1.0/24", "x-forwarded-for"), "should not match non-allowed XFF IP")
+end)
+
+test("x-forwarded-for: missing header returns false", function()
+    reset_mocks()
+    ngx.var.http_x_forwarded_for = nil
+    assert_eq(false, allowed_ips.is_allowed("0.0.0.0/0", "x-forwarded-for"), "should return false when XFF header missing")
+end)
+
+test("x-forwarded-for: ignores remote_addr", function()
+    reset_mocks()
+    ngx.var.remote_addr = "192.168.1.100"
+    ngx.var.http_x_forwarded_for = "8.8.8.8"
+    assert_eq(false, allowed_ips.is_allowed("192.168.1.100", "x-forwarded-for"), "should use XFF not remote_addr")
+end)
+
+-- ip_source: x-real-ip tests
+
+test("x-real-ip: exact match", function()
+    reset_mocks()
+    ngx.var.remote_addr = "10.0.0.1"
+    ngx.var.http_x_real_ip = "192.168.1.100"
+    assert_eq(true, allowed_ips.is_allowed("192.168.1.100", "x-real-ip"), "should match X-Real-IP")
+end)
+
+test("x-real-ip: no match returns false", function()
+    reset_mocks()
+    ngx.var.http_x_real_ip = "8.8.8.8"
+    assert_eq(false, allowed_ips.is_allowed("192.168.1.0/24", "x-real-ip"), "should not match non-allowed X-Real-IP")
+end)
+
+test("x-real-ip: missing header returns false", function()
+    reset_mocks()
+    ngx.var.http_x_real_ip = nil
+    assert_eq(false, allowed_ips.is_allowed("0.0.0.0/0", "x-real-ip"), "should return false when X-Real-IP header missing")
+end)
+
+test("x-real-ip: ignores remote_addr", function()
+    reset_mocks()
+    ngx.var.remote_addr = "192.168.1.100"
+    ngx.var.http_x_real_ip = "8.8.8.8"
+    assert_eq(false, allowed_ips.is_allowed("192.168.1.100", "x-real-ip"), "should use X-Real-IP not remote_addr")
+end)
+
+-- ip_source: backward compatibility tests
+
+test("nil ip_source uses remote_addr", function()
+    reset_mocks()
+    ngx.var.remote_addr = "10.0.0.1"
+    assert_eq(true, allowed_ips.is_allowed("10.0.0.0/8", nil), "nil source should use remote_addr")
+end)
+
+test("explicit remote_addr ip_source uses remote_addr", function()
+    reset_mocks()
+    ngx.var.remote_addr = "10.0.0.1"
+    assert_eq(true, allowed_ips.is_allowed("10.0.0.0/8", "remote_addr"), "remote_addr source should use remote_addr")
+end)
+
+-- ip_source: check() passthrough tests
+
+test("check with x-forwarded-for: does not exit when XFF IP matches", function()
+    reset_mocks()
+    ngx.var.http_x_forwarded_for = "10.0.0.1"
+    allowed_ips.check("10.0.0.0/8", "x-forwarded-for")
+end)
+
+test("check with x-forwarded-for: exits 403 when XFF IP does not match", function()
+    reset_mocks()
+    ngx.var.http_x_forwarded_for = "192.168.1.1"
+    local ok, err = pcall(allowed_ips.check, "10.0.0.0/8", "x-forwarded-for")
+    assert_eq(false, ok, "should have called ngx.exit")
+    assert_eq(403, mock_exit_code, "should return 403")
+end)
+
 -- Summary
 print("")
 print(string.format("Results: %d/%d tests passed", pass_count, test_count))
