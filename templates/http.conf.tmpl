@@ -72,6 +72,7 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ $openresty_domains :=                 when (contains $first_container.Labels (printf "%s%s" $label_prefix "domains"))                 (index $first_container.Labels (printf "%s%s" $label_prefix "domains")) "" }}
 {{ $openresty_domains_list := splitList " " $openresty_domains }}
 {{ $openresty_https_port :=              when (contains $first_container.Labels (printf "%s%s" $label_prefix "https-port"))              (index $first_container.Labels (printf "%s%s" $label_prefix "https-port")) "443" }}
+{{ $openresty_basic_auth :=              when (contains $first_container.Labels (printf "%s%s" $label_prefix "basic-auth"))              (index $first_container.Labels (printf "%s%s" $label_prefix "basic-auth")) "" }}
 {{ $openresty_letsencrypt :=             when (contains $first_container.Labels (printf "%s%s" $label_prefix "letsencrypt"))             (index $first_container.Labels (printf "%s%s" $label_prefix "letsencrypt")) "" }}
 {{ $openresty_letsencrypt_enabled := eq $openresty_letsencrypt "true" }}
 {{ $openresty_has_cert := exists (printf "/etc/nginx/ssl/%s-server.key" $app) }}
@@ -138,6 +139,12 @@ server {
 
     {{ else }}
     location / {
+        {{ if $openresty_basic_auth }}
+        access_by_lua_block {
+            local basic_auth = require("basic_auth")
+            basic_auth.check([===[{{ $openresty_basic_auth }}]===])
+        }
+        {{ end }}
         gzip                    on;
         gzip_buffers            4 32k;
         gzip_comp_level         6;

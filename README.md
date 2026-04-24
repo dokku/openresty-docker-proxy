@@ -78,6 +78,31 @@ The default os page size to base default proxy values on.
 
 The format of the openresty access log for the app.
 
+#### `openresty.basic-auth`
+
+Enables HTTP Basic Authentication on the app's location block. The value is a space-separated list of `user:password_hash` entries.
+
+Supported password hash formats:
+
+- `{SHA}base64hash` - SHA-1 hash encoded in base64 (recommended)
+- Plain text password (not recommended for production)
+
+Generate a SHA-1 hash for a password:
+
+```bash
+echo -n "mypassword" | openssl sha1 -binary | openssl base64
+```
+
+Example usage:
+
+```bash
+# Single user
+docker run --label='openresty.basic-auth=myuser:{SHA}kd/Z3bQZiv/FwZTNjObTOP3kcOI=' myimage
+
+# Multiple users
+docker run --label='openresty.basic-auth=user1:{SHA}hash1 user2:{SHA}hash2' myimage
+```
+
 #### `openresty.access-log-path`
 
 The path - in the container - where the access logs will be written.
