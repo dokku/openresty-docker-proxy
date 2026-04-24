@@ -91,15 +91,15 @@ This label only takes effect when both `openresty.allowed-ips` and `openresty.ba
 
 #### `openresty.allowed-ips`
 
-Restricts access to the app based on client IP address. The value is a space-separated list of IPv4 addresses and CIDR ranges. Requests from non-matching IPs receive a `403 Forbidden` response.
+Restricts access to the app based on client IP address. The value is a space-separated list of IPv4 and/or IPv6 addresses and CIDR ranges. Requests from non-matching IPs receive a `403 Forbidden` response.
 
-Only IPv4 addresses and CIDR ranges are currently supported. The client IP is determined by `remote_addr` by default, which is the direct connecting client's IP address. If this proxy runs behind another load balancer, use `openresty.allowed-ips-source` to specify an alternative IP source such as `x-forwarded-for` or `x-real-ip`.
+Both IPv4 and IPv6 addresses and CIDR ranges are supported. Each entry in the allow list only matches its own address family (IPv4 entries match IPv4 clients, IPv6 entries match IPv6 clients). The client IP is determined by `remote_addr` by default, which is the direct connecting client's IP address. If this proxy runs behind another load balancer, use `openresty.allowed-ips-source` to specify an alternative IP source such as `x-forwarded-for` or `x-real-ip`.
 
 Example usage:
 
 ```bash
-# Allow only specific IPs
-docker run --label='openresty.allowed-ips=10.0.0.0/8 192.168.1.100' myimage
+# Allow specific IPs (IPv4 and IPv6)
+docker run --label='openresty.allowed-ips=10.0.0.0/8 192.168.1.100 2001:db8::/32 ::1' myimage
 
 # Allow specific IPs AND require basic auth (satisfy all, the default)
 docker run --label='openresty.allowed-ips=10.0.0.0/8' \
