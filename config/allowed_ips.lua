@@ -27,12 +27,30 @@ local function cidr_mask(prefix_len)
     return bit.lshift(-1, 32 - prefix_len)
 end
 
--- is_allowed checks whether ngx.var.remote_addr matches any entry
+-- is_allowed checks whether the client IP matches any entry
 -- in the space-separated allowed_ips_str. Each entry is either a
 -- plain IPv4 address (treated as /32) or a CIDR like 10.0.0.0/8.
+-- ip_source selects where the client IP comes from:
+--   nil/""/remote_addr  -> ngx.var.remote_addr (default)
+--   "x-forwarded-for"   -> first IP in X-Forwarded-For header
+--   "x-real-ip"         -> X-Real-IP header
 -- Returns true if the IP matches any entry, false otherwise.
-function _M.is_allowed(allowed_ips_str)
-    local remote_addr = ngx.var.remote_addr
+function _M.is_allowed(allowed_ips_str, ip_source)
+    local remote_addr
+    if ip_source == "x-forwarded-for" then
+        local xff = ngx.var.http_x_forwarded_for
+        if xff then
+            remote_addr = xff:match("^%s*([^,]+)")
+            if remote_addr then
+                remote_addr = remote_addr:match("^%s*(.-)%s*$")
+            end
+        end
+    elseif ip_source == "x-real-ip" then
+        remote_addr = ngx.var.http_x_real_ip
+    else
+        remote_addr = ngx.var.remote_addr
+    end
+
     if not remote_addr then
         return false
     end
@@ -64,8 +82,8 @@ end
 
 -- check denies the request with 403 Forbidden if the client IP
 -- does not match any entry in allowed_ips_str.
-function _M.check(allowed_ips_str)
-    if not _M.is_allowed(allowed_ips_str) then
+function _M.check(allowed_ips_str, ip_source)
+    if not _M.is_allowed(allowed_ips_str, ip_source) then
         ngx.exit(ngx.HTTP_FORBIDDEN)
     end
 end
