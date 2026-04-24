@@ -22,7 +22,7 @@ ARG DOCKER_GEN_VERSION=0.16.3
 RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/nginx-proxy/docker-gen/releases/download/${DOCKER_GEN_VERSION}/docker-gen-linux-$(dpkg --print-architecture)-${DOCKER_GEN_VERSION}.tar.gz" && \
     tar xvzf /tmp/docker-gen.tar.gz -C /usr/local/bin
 
-ARG DEHYDRATED_VERSION=0.7.1
+ARG DEHYDRATED_VERSION=0.7.2
 RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/dehydrated-io/dehydrated/releases/download/v${DEHYDRATED_VERSION}/dehydrated-${DEHYDRATED_VERSION}.tar.gz" && \
     tar xvzf /tmp/docker-gen.tar.gz && \
     mv dehydrated-${DEHYDRATED_VERSION}/dehydrated /usr/local/bin/dehydrated && \
