@@ -1,4 +1,4 @@
-FROM golang:1.26.2 as forego
+FROM golang:1.26.2 AS forego
 
 ARG FOREGO_VERSION=v0.17.2
 
@@ -11,7 +11,7 @@ RUN git clone https://github.com/nginx-proxy/forego . \
     && go clean -cache \
     && mv forego /usr/local/bin/forego
 
-FROM ubuntu:24.04 as downloads
+FROM ubuntu:24.04 AS downloads
 
 RUN apt-get update && \
     apt-get upgrade -y && \
