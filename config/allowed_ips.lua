@@ -1,35 +1,13 @@
 local _M = {}
 
-local bit = require("bit")
-
--- parse_ipv4 converts a dotted-decimal IPv4 string to a 32-bit number.
--- Returns nil if the string is not a valid IPv4 address.
-local function parse_ipv4(ip_str)
-    local o1, o2, o3, o4 = ip_str:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$")
-    if not o1 then
-        return nil
-    end
-
-    o1, o2, o3, o4 = tonumber(o1), tonumber(o2), tonumber(o3), tonumber(o4)
-    if o1 > 255 or o2 > 255 or o3 > 255 or o4 > 255 then
-        return nil
-    end
-
-    return bit.tobit(o1 * 16777216 + o2 * 65536 + o3 * 256 + o4)
-end
-
--- cidr_mask builds a 32-bit subnet mask for a given prefix length (0-32).
-local function cidr_mask(prefix_len)
-    if prefix_len == 0 then
-        return bit.tobit(0)
-    end
-
-    return bit.lshift(-1, 32 - prefix_len)
-end
+local ipmatcher = require("resty.ipmatcher")
 
 -- is_allowed checks whether the client IP matches any entry
 -- in the space-separated allowed_ips_str. Each entry is either a
--- plain IPv4 address (treated as /32) or a CIDR like 10.0.0.0/8.
+-- plain IPv4 address (treated as /32), a CIDR like 10.0.0.0/8,
+-- a plain IPv6 address (treated as /128), or an IPv6 CIDR like 2001:db8::/32.
+-- IPv4 entries are only matched against IPv4 clients, and IPv6
+-- entries are only matched against IPv6 clients.
 -- ip_source selects where the client IP comes from:
 --   nil/""/remote_addr  -> ngx.var.remote_addr (default)
 --   "x-forwarded-for"   -> first IP in X-Forwarded-For header
@@ -55,23 +33,28 @@ function _M.is_allowed(allowed_ips_str, ip_source)
         return false
     end
 
-    local client_ip = parse_ipv4(remote_addr)
-    if not client_ip then
+    local ip_list = {}
+    for entry in allowed_ips_str:gmatch("%S+") do
+        ip_list[#ip_list + 1] = entry
+    end
+
+    if #ip_list == 0 then
         return false
     end
 
-    for entry in allowed_ips_str:gmatch("%S+") do
-        local ip_part, prefix_str = entry:match("^(.+)/(%d+)$")
-        if not ip_part then
-            ip_part = entry
-            prefix_str = "32"
-        end
+    -- Fast path: try all entries at once
+    local matcher = ipmatcher.new(ip_list)
+    if matcher then
+        local ok = matcher:match(remote_addr)
+        return ok == true
+    end
 
-        local net_ip = parse_ipv4(ip_part)
-        local prefix_len = tonumber(prefix_str)
-        if net_ip and prefix_len and prefix_len >= 0 and prefix_len <= 32 then
-            local mask = cidr_mask(prefix_len)
-            if bit.band(client_ip, mask) == bit.band(net_ip, mask) then
+    -- Fallback: malformed entry detected, try individually (skip bad ones)
+    for _, entry in ipairs(ip_list) do
+        matcher = ipmatcher.new({entry})
+        if matcher then
+            local ok = matcher:match(remote_addr)
+            if ok then
                 return true
             end
         end
