@@ -11,6 +11,24 @@ on:
       - 'main'
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install bats
+        run: sudo apt-get update && sudo apt-get install -y bats
+
+      - name: Build image
+        run: docker image build -t openresty-docker-proxy:latest .
+
+      - name: Pull test image
+        run: docker image pull --platform linux/amd64 dokku/python-sample
+
+      - name: Run tests
+        run: bats test.bats
+
   docker:
     runs-on: ubuntu-latest
     steps:

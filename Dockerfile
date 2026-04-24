@@ -69,6 +69,8 @@ RUN apt-get update && \
     find /var/cache/ ! -type d -exec rm '{}' \;
 
 COPY config/allow_domain.lua /etc/nginx/lua/allow_domain.lua
+COPY config/basic_auth.lua /etc/nginx/lua/basic_auth.lua
+COPY config/test_basic_auth.lua /etc/nginx/lua/test_basic_auth.lua
 COPY config/logrotate /etc/logrotate.d/openresty
 COPY config/init.d /etc/init.d/openresty
 COPY config/nginx.conf /etc/nginx/nginx.conf
@@ -83,4 +85,4 @@ WORKDIR /app
 CMD ["forego", "start", "-r"]
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
-ENV DOCKER_HOST unix:///var/run/docker.sock
+ENV DOCKER_HOST=unix:///var/run/docker.sock

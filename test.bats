@@ -94,7 +94,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -147,7 +147,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -183,7 +183,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -219,11 +219,66 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
   assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/http.tmpl)"
+}
+
+@test "[start] http basic-auth" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.basic-auth=testuser:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "$TEST_CONTAINER_NAME")"
+  run echo "$IP_ADDRESS"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/http-basic-auth.tmpl)"
+}
+
+@test "[unit] basic-auth lua module" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker exec openresty-docker-proxy resty -I /etc/nginx/lua /etc/nginx/lua/test_basic_auth.lua
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
 }
 
 @test "[start] http-include" {
@@ -257,7 +312,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -310,7 +365,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -346,7 +401,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -365,7 +420,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
