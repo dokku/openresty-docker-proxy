@@ -94,7 +94,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -147,7 +147,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -183,7 +183,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -219,7 +219,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -255,7 +255,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -275,7 +275,7 @@ teardown() {
 
   sleep 3
 
-  run docker exec -it openresty-docker-proxy resty -I /etc/nginx/lua /etc/nginx/lua/test_basic_auth.lua
+  run docker exec openresty-docker-proxy resty -I /etc/nginx/lua /etc/nginx/lua/test_basic_auth.lua
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -312,7 +312,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -365,7 +365,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -401,7 +401,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -420,7 +420,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker exec -it openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
   assert_success
