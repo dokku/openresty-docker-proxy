@@ -73,6 +73,8 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ $openresty_domains_list := splitList " " $openresty_domains }}
 {{ $openresty_https_port :=              when (contains $first_container.Labels (printf "%s%s" $label_prefix "https-port"))              (index $first_container.Labels (printf "%s%s" $label_prefix "https-port")) "443" }}
 {{ $openresty_basic_auth :=              when (contains $first_container.Labels (printf "%s%s" $label_prefix "basic-auth"))              (index $first_container.Labels (printf "%s%s" $label_prefix "basic-auth")) "" }}
+{{ $openresty_allowed_ips :=             when (contains $first_container.Labels (printf "%s%s" $label_prefix "allowed-ips"))             (index $first_container.Labels (printf "%s%s" $label_prefix "allowed-ips")) "" }}
+{{ $openresty_access_satisfy :=          when (contains $first_container.Labels (printf "%s%s" $label_prefix "access-satisfy"))          (index $first_container.Labels (printf "%s%s" $label_prefix "access-satisfy")) "all" }}
 {{ $openresty_letsencrypt :=             when (contains $first_container.Labels (printf "%s%s" $label_prefix "letsencrypt"))             (index $first_container.Labels (printf "%s%s" $label_prefix "letsencrypt")) "" }}
 {{ $openresty_letsencrypt_enabled := eq $openresty_letsencrypt "true" }}
 {{ $openresty_has_cert := exists (printf "/etc/nginx/ssl/%s-server.key" $app) }}
@@ -139,10 +141,28 @@ server {
 
     {{ else }}
     location / {
-        {{ if $openresty_basic_auth }}
+        {{ if or $openresty_allowed_ips $openresty_basic_auth }}
         access_by_lua_block {
+            {{ if and $openresty_allowed_ips $openresty_basic_auth }}
+            {{ if eq $openresty_access_satisfy "any" }}
+            local allowed_ips = require("allowed_ips")
+            if not allowed_ips.is_allowed([===[{{ $openresty_allowed_ips }}]===]) then
+                local basic_auth = require("basic_auth")
+                basic_auth.check([===[{{ $openresty_basic_auth }}]===])
+            end
+            {{ else }}
+            local allowed_ips = require("allowed_ips")
+            allowed_ips.check([===[{{ $openresty_allowed_ips }}]===])
             local basic_auth = require("basic_auth")
             basic_auth.check([===[{{ $openresty_basic_auth }}]===])
+            {{ end }}
+            {{ else if $openresty_allowed_ips }}
+            local allowed_ips = require("allowed_ips")
+            allowed_ips.check([===[{{ $openresty_allowed_ips }}]===])
+            {{ else }}
+            local basic_auth = require("basic_auth")
+            basic_auth.check([===[{{ $openresty_basic_auth }}]===])
+            {{ end }}
         }
         {{ end }}
         gzip                    on;
