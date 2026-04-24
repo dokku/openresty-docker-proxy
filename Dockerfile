@@ -1,6 +1,6 @@
 FROM golang:1.26.2 AS forego
 
-ARG FOREGO_VERSION=v0.17.2
+ARG FOREGO_VERSION=v0.18.6
 
 WORKDIR /go/forego
 
