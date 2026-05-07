@@ -36,6 +36,7 @@ ARG LUA_RESTY_IPMATCHER_VERSION=0.6.1
 ARG SOCKPROC_FIX_COMMIT=3331ad03cd247bfad6f3995c85851ccfde353eef
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# hadolint ignore=DL3003
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends bsdmainutils=* ca-certificates=* luarocks=* gcc=* gnupg=* logrotate=* make=* wget=* && \
