@@ -11,7 +11,7 @@ RUN git clone https://github.com/nginx-proxy/forego . \
     && go clean -cache \
     && mv forego /usr/local/bin/forego
 
-FROM ubuntu:24.04 AS downloads
+FROM ubuntu:26.04 AS downloads
 
 RUN apt-get update && \
     apt-get upgrade -y && \
@@ -28,13 +28,15 @@ RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/dehydrated-io/dehydrat
     mv dehydrated-${DEHYDRATED_VERSION}/dehydrated /usr/local/bin/dehydrated && \
     chmod +x /usr/local/bin/dehydrated
 
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 ARG OPENRESTY_VERSION=1.29.2.3-1~jammy1
 ARG LUA_RESTY_AUTO_SSL_VERSION=0.13.1-1
 ARG LUA_RESTY_IPMATCHER_VERSION=0.6.1
+ARG SOCKPROC_FIX_COMMIT=3331ad03cd247bfad6f3995c85851ccfde353eef
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# hadolint ignore=DL3003
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends bsdmainutils=* ca-certificates=* luarocks=* gcc=* gnupg=* logrotate=* make=* wget=* && \
@@ -44,7 +46,12 @@ RUN apt-get update && \
     cat /etc/apt/sources.list.d/openresty.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends openresty=${OPENRESTY_VERSION} openresty-opm=${OPENRESTY_VERSION} && \
-    luarocks install lua-resty-auto-ssl ${LUA_RESTY_AUTO_SSL_VERSION} && \
+    cd /tmp && \
+    luarocks unpack lua-resty-auto-ssl ${LUA_RESTY_AUTO_SSL_VERSION} && \
+    cd lua-resty-auto-ssl-${LUA_RESTY_AUTO_SSL_VERSION}/lua-resty-auto-ssl && \
+    sed -i -e 's|juce/sockproc|dokku/sockproc|' -e "s|SOCKPROC_VERSION:=92aba736027bb5d96e190b71555857ac5bb6b2be|SOCKPROC_VERSION:=${SOCKPROC_FIX_COMMIT}|" Makefile && \
+    luarocks make && \
+    cd /tmp && rm -rf lua-resty-auto-ssl-${LUA_RESTY_AUTO_SSL_VERSION} && \
     luarocks install lua-resty-ipmatcher ${LUA_RESTY_IPMATCHER_VERSION} && \
     ln -sf /usr/local/openresty/nginx/conf /etc/nginx && \
     mkdir -p /etc/resty-auto-ssl/letsencrypt/conf.d /etc/nginx/ssl /etc/nginx/stream-sites-enabled /etc/nginx/sites-enabled /var/log/nginx && \
