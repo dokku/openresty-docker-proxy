@@ -478,6 +478,191 @@ teardown() {
   assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/http-allowed-ips-source-xff-basic-auth-satisfy-any.tmpl)"
 }
 
+@test "[start] http route" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --platform linux/amd64 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS_WEB="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "$TEST_CONTAINER_NAME")"
+  IP_ADDRESS_API="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "${TEST_CONTAINER_NAME}_2")"
+  run echo "web=$IP_ADDRESS_WEB api=$IP_ADDRESS_API"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_WEB/$IP_ADDRESS_WEB/" -e "s/VAR_IP_ADDRESS_API/$IP_ADDRESS_API/" fixtures/http-route.tmpl)"
+}
+
+@test "[start] http route strip-prefix" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --platform linux/amd64 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=openresty.route.0.strip-prefix=true --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS_WEB="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "$TEST_CONTAINER_NAME")"
+  IP_ADDRESS_API="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "${TEST_CONTAINER_NAME}_2")"
+  run echo "web=$IP_ADDRESS_WEB api=$IP_ADDRESS_API"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_WEB/$IP_ADDRESS_WEB/" -e "s/VAR_IP_ADDRESS_API/$IP_ADDRESS_API/" fixtures/http-route-strip-prefix.tmpl)"
+}
+
+@test "[start] http route multiple" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --platform linux/amd64 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=openresty.route.1.path-prefix=/internal --label=openresty.route.1.port=5001 --label=openresty.route.1.strip-prefix=true --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS_WEB="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "$TEST_CONTAINER_NAME")"
+  IP_ADDRESS_API="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "${TEST_CONTAINER_NAME}_2")"
+  run echo "web=$IP_ADDRESS_WEB api=$IP_ADDRESS_API"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_WEB/$IP_ADDRESS_WEB/" -e "s/VAR_IP_ADDRESS_API/$IP_ADDRESS_API/" fixtures/http-route-multiple.tmpl)"
+}
+
+@test "[start] https cert route" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container exec openresty-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.key /etc/nginx/ssl/python-server.key
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container exec openresty-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.crt /etc/nginx/ssl/python-server.crt
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm --cidfile /tmp/cid-file-2 --platform linux/amd64 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" -d dokku/python-sample /start web
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS_WEB="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "$TEST_CONTAINER_NAME")"
+  IP_ADDRESS_API="$(docker container inspect --format='{{.NetworkSettings.IPAddress}}' "${TEST_CONTAINER_NAME}_2")"
+  run echo "web=$IP_ADDRESS_WEB api=$IP_ADDRESS_API"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_WEB/$IP_ADDRESS_WEB/" -e "s/VAR_IP_ADDRESS_API/$IP_ADDRESS_API/" fixtures/https-route.cert.tmpl)"
+}
+
 @test "[unit] basic-auth lua module" {
   run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
