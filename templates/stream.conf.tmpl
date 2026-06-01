@@ -24,7 +24,7 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }}-{{ $scheme }} {
 {{ range $_, $container := $containers }}
 {{ range $_, $network := $container.Networks }}
 {{ if eq $network.Name $initial_network }}
-    server {{ $container.IP }}:{{ $container_port }}; # network={{ $network.Name }}
+    server {{ $network.IP }}:{{ $container_port }}; # network={{ $network.Name }}
 {{ end }}{{/* endif initial_network */}}
 {{ end }}{{/* endrange networks */}}
 {{ end }}{{/* endrange containers */}}

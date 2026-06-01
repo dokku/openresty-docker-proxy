@@ -38,7 +38,7 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
         # current_network={{ $network.Name }} initial_network={{ $initial_network }}
     {{ end }}
 {{ if eq $network.Name $initial_network }}
-    server {{ $container.IP }}:{{ $container_port }};{{ if eq (env "OPENRESTY_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}{{ end }}
+    server {{ $network.IP }}:{{ $container_port }};{{ if eq (env "OPENRESTY_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}{{ end }}
 {{ end }}{{/* endif initial_network */}}
 {{ end }}{{/* endrange networks */}}
 {{ end }}{{/* endrange containers */}}
@@ -46,6 +46,34 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
 {{ end }}{{/* endif scheme in http|https */}}
 {{ end }}{{/* endif contains upstream_name */}}
 {{ end }}{{/* endrange port_mappings */}}
+
+{{ if ne $process_type $web_process }}
+{{ range $label, $value := $first_container.Labels }}
+{{ if and (hasPrefix (printf "%sroute." $label_prefix) $label) (hasSuffix ".path-prefix" $label) }}
+{{ $route_index := trimSuffix ".path-prefix" (trimPrefix (printf "%sroute." $label_prefix) $label) }}
+{{ $port_label := printf "%sroute.%s.port" $label_prefix $route_index }}
+{{ if contains $first_container.Labels $port_label }}
+{{ $route_port := index $first_container.Labels $port_label }}
+{{ $upstream_name := printf "%s-%s-%s" $app $process_type $route_port }}
+{{ if not (contains $upstreams $upstream_name) }}
+{{ $_ := set $upstreams $upstream_name true }}
+upstream {{ $upstream_name }} {
+{{ range $_, $container := $containers }}
+{{ range $_, $network := $container.Networks }}
+    {{ if eq (env "OPENRESTY_DEBUG") "true" }}
+        # current_network={{ $network.Name }} initial_network={{ $initial_network }}
+    {{ end }}
+{{ if eq $network.Name $initial_network }}
+    server {{ $network.IP }}:{{ $route_port }};{{ if eq (env "OPENRESTY_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} route_port={{ $route_port }} route_path={{ $value }} network={{ $network.Name }}{{ end }}
+{{ end }}{{/* endif initial_network */}}
+{{ end }}{{/* endrange networks */}}
+{{ end }}{{/* endrange containers */}}
+}
+{{ end }}{{/* endif new upstream */}}
+{{ end }}{{/* endif port label exists */}}
+{{ end }}{{/* endif route path-prefix label */}}
+{{ end }}{{/* endrange labels for route discovery */}}
+{{ end }}{{/* endif non-web process */}}
 {{ end }}{{/* endrange groupByLabel appContainers */}}
 
 {{ if (contains $all_app_containers $web_process) }}
@@ -216,6 +244,75 @@ server {
         root /etc/nginx/errors;
         internal;
     }
+
+    {{ range $route_process_type, $route_proc_containers := $all_app_containers }}
+    {{ if ne $route_process_type $web_process }}
+    {{ $route_first := index $route_proc_containers 0 }}
+    {{ range $label, $value := $route_first.Labels }}
+    {{ if and (hasPrefix (printf "%sroute." $label_prefix) $label) (hasSuffix ".path-prefix" $label) }}
+    {{ $route_index := trimSuffix ".path-prefix" (trimPrefix (printf "%sroute." $label_prefix) $label) }}
+    {{ $port_label := printf "%sroute.%s.port" $label_prefix $route_index }}
+    {{ if contains $route_first.Labels $port_label }}
+    {{ $route_port := index $route_first.Labels $port_label }}
+    {{ $strip_label := printf "%sroute.%s.strip-prefix" $label_prefix $route_index }}
+    {{ $strip_prefix := eq (when (contains $route_first.Labels $strip_label) (index $route_first.Labels $strip_label) "false") "true" }}
+    location {{ $value }} {
+        {{ if or $openresty_allowed_ips $openresty_basic_auth }}
+        access_by_lua_block {
+            {{ if and $openresty_allowed_ips $openresty_basic_auth }}
+            {{ if eq $openresty_access_satisfy "any" }}
+            local allowed_ips = require("allowed_ips")
+            if not allowed_ips.is_allowed([===[{{ $openresty_allowed_ips }}]===]{{ if $openresty_allowed_ips_source }}, [===[{{ $openresty_allowed_ips_source }}]===]{{ end }}) then
+                local basic_auth = require("basic_auth")
+                basic_auth.check([===[{{ $openresty_basic_auth }}]===])
+            end
+            {{ else }}
+            local allowed_ips = require("allowed_ips")
+            allowed_ips.check([===[{{ $openresty_allowed_ips }}]===]{{ if $openresty_allowed_ips_source }}, [===[{{ $openresty_allowed_ips_source }}]===]{{ end }})
+            local basic_auth = require("basic_auth")
+            basic_auth.check([===[{{ $openresty_basic_auth }}]===])
+            {{ end }}
+            {{ else if $openresty_allowed_ips }}
+            local allowed_ips = require("allowed_ips")
+            allowed_ips.check([===[{{ $openresty_allowed_ips }}]===]{{ if $openresty_allowed_ips_source }}, [===[{{ $openresty_allowed_ips_source }}]===]{{ end }})
+            {{ else }}
+            local basic_auth = require("basic_auth")
+            basic_auth.check([===[{{ $openresty_basic_auth }}]===])
+            {{ end }}
+        }
+        {{ end }}
+        gzip                    on;
+        gzip_buffers            4 32k;
+        gzip_comp_level         6;
+        gzip_min_length         1100;
+        gzip_types              text/css text/javascript text/xml text/plain text/x-component application/javascript application/x-javascript application/json application/xml  application/rss+xml font/truetype application/x-font-ttf font/opentype application/vnd.ms-fontobject image/svg+xml;
+        gzip_vary               on;
+        proxy_buffer_size       {{ $openresty_proxy_buffer_size }};
+        proxy_buffering         {{ $openresty_proxy_buffering }};
+        proxy_buffers           {{ $openresty_proxy_buffers }};
+        proxy_busy_buffers_size {{ $openresty_proxy_busy_buffer_size }};
+        proxy_connect_timeout   {{ $openresty_proxy_connect_timeout }};
+        proxy_http_version      1.1;
+        {{ if $strip_prefix }}rewrite                 ^{{ $value }}/?(.*)$ /$1 break;{{ end }}
+        proxy_pass              http://{{ $app }}-{{ $route_process_type }}-{{ $route_port }};
+        proxy_read_timeout      {{ $openresty_proxy_read_timeout }};
+        proxy_send_timeout      {{ $openresty_proxy_send_timeout }};
+        send_timeout            {{ $openresty_send_timeout }};
+        proxy_set_header        Connection $http_connection;
+        proxy_set_header        Host $http_host;
+        proxy_set_header        Upgrade $http_upgrade;
+        proxy_set_header        X-Forwarded-For {{ $openresty_x_forwarded_for_value }};
+        proxy_set_header        X-Forwarded-Port {{ $openresty_x_forwarded_port_value }};
+        proxy_set_header        X-Forwarded-Proto {{ $openresty_x_forwarded_proto_value }};
+        proxy_set_header        X-Request-Start $msec;
+        {{ if $openresty_x_forwarded_ssl }}proxy_set_header       X-Forwarded-Ssl {{ $openresty_x_forwarded_ssl }};{{ end }}
+        {{ if and (eq $scheme "https") $openresty_ssl_enabled }}http2_push_preload      on;{{ end }}
+    }
+    {{ end }}{{/* endif port label exists */}}
+    {{ end }}{{/* endif route path-prefix label */}}
+    {{ end }}{{/* endrange labels for route locations */}}
+    {{ end }}{{/* endif non-web process */}}
+    {{ end }}{{/* endrange all_app_containers for routes */}}
 
     {{ range $label, $base64Value := $first_container.Labels }}
     {{ if hasPrefix (printf "%s%s" $label_prefix "include-http-") $label }}

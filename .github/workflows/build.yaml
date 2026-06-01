@@ -24,7 +24,7 @@ jobs:
         run: docker image build -t openresty-docker-proxy:latest .
 
       - name: Pull test image
-        run: docker image pull --platform linux/amd64 dokku/python-sample
+        run: docker image pull traefik/whoami
 
       - name: Run tests
         run: bats test.bats

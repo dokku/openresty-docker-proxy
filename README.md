@@ -248,6 +248,33 @@ Defines a timeout for reading a response from the proxied server.
 
 Defines a timeout for sending a request to the proxied server.
 
+#### `openresty.route.<n>.path-prefix`
+
+Declares a path prefix on a non-`web` container that should be routed to that container instead of falling through to the web upstream. Combined with `openresty.route.<n>.port` (required) and `openresty.route.<n>.strip-prefix` (optional), this lets a single hostname fan requests out to multiple Procfile processes. `<n>` is a numeric index that disambiguates multiple routes on the same container; nginx longest-prefix-match handles ordering, so the index only needs to be stable, not specific.
+
+For each labeled route, the sidecar emits an upstream pointing at the non-`web` container's IP at the labeled port and a `location <path-prefix>` block inside every `server { }` block produced for the app's domains. Requests that do not match any labeled prefix fall through to the existing `location /` that proxies the web upstream. The route locations inherit the app's WebSocket headers, proxy buffer/timeout settings, and access controls (`openresty.basic-auth`, `openresty.allowed-ips`, `openresty.access-satisfy`) from the web container.
+
+Example usage:
+
+```bash
+docker run --label=openresty.port-mapping=http:80:5001 \
+           --label=openresty.route.0.path-prefix=/api/v0 \
+           --label=openresty.route.0.port=5001 \
+           --label=com.dokku.app-name=myapp \
+           --label=com.dokku.process-type=api \
+           myimage
+```
+
+#### `openresty.route.<n>.port`
+
+The upstream port on the non-`web` container that requests matching `openresty.route.<n>.path-prefix` should be forwarded to. Required when a `path-prefix` is set; the route is skipped if this label is absent.
+
+#### `openresty.route.<n>.strip-prefix`
+
+> default: `false`
+
+When `true`, the matched `path-prefix` is stripped from the request before it is forwarded upstream (nginx renders `proxy_pass http://<upstream>/;` with a trailing slash). Use this when the upstream process is written assuming it is mounted at root (so it sees `/users/42` instead of `/api/v0/users/42`). When `false` or unset, the upstream sees the full original request path.
+
 #### `openresty.send-timeout`
 
 Defines a timeout for sending a response to the client.
