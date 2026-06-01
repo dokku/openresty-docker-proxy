@@ -30,7 +30,7 @@ RUN curl -o /tmp/docker-gen.tar.gz -L "https://github.com/dehydrated-io/dehydrat
 
 FROM ubuntu:26.04
 
-ARG OPENRESTY_VERSION=1.29.2.3-1~jammy1
+ARG OPENRESTY_VERSION=1.29.2.5-1~jammy1
 ARG LUA_RESTY_AUTO_SSL_VERSION=0.13.1-1
 ARG LUA_RESTY_IPMATCHER_VERSION=0.6.1
 ARG SOCKPROC_FIX_COMMIT=3331ad03cd247bfad6f3995c85851ccfde353eef
