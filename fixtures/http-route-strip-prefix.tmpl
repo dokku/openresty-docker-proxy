@@ -63,7 +63,8 @@ server {
         proxy_busy_buffers_size 8192;
         proxy_connect_timeout   60s;
         proxy_http_version      1.1;
-        proxy_pass              http://python-api-5001/;
+        rewrite                 ^/api/v0/?(.*)$ /$1 break;
+        proxy_pass              http://python-api-5001;
         proxy_read_timeout      60s;
         proxy_send_timeout      60s;
         send_timeout            60s;
