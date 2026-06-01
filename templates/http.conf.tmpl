@@ -38,7 +38,7 @@ upstream {{ $app }}-{{ $process_type }}-{{ $container_port }} {
         # current_network={{ $network.Name }} initial_network={{ $initial_network }}
     {{ end }}
 {{ if eq $network.Name $initial_network }}
-    server {{ $container.IP }}:{{ $container_port }};{{ if eq (env "OPENRESTY_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}{{ end }}
+    server {{ $network.IP }}:{{ $container_port }};{{ if eq (env "OPENRESTY_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} container_port={{ $container_port }} network={{ $network.Name }} scheme={{ $scheme }}{{ end }}
 {{ end }}{{/* endif initial_network */}}
 {{ end }}{{/* endrange networks */}}
 {{ end }}{{/* endrange containers */}}
@@ -64,7 +64,7 @@ upstream {{ $upstream_name }} {
         # current_network={{ $network.Name }} initial_network={{ $initial_network }}
     {{ end }}
 {{ if eq $network.Name $initial_network }}
-    server {{ $container.IP }}:{{ $route_port }};{{ if eq (env "OPENRESTY_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} route_port={{ $route_port }} route_path={{ $value }} network={{ $network.Name }}{{ end }}
+    server {{ $network.IP }}:{{ $route_port }};{{ if eq (env "OPENRESTY_DEBUG") "true" }} # app={{ $app }} process_type={{ $process_type }} route_port={{ $route_port }} route_path={{ $value }} network={{ $network.Name }}{{ end }}
 {{ end }}{{/* endif initial_network */}}
 {{ end }}{{/* endrange networks */}}
 {{ end }}{{/* endrange containers */}}
