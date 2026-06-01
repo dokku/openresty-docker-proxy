@@ -76,7 +76,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=grpc:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=grpc:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -129,7 +129,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=grpcs:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  run docker run --rm --cidfile /tmp/cid-file --label=openresty.domains=python.example.com '--label=openresty.port-mapping=grpcs:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -165,7 +165,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=grpcs:443:5000' --label=openresty.letsencrypt=true --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com '--label=openresty.port-mapping=grpcs:443:5000' --label=openresty.letsencrypt=true --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -201,7 +201,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -237,7 +237,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.basic-auth=testuser:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.basic-auth=testuser:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -273,7 +273,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -309,7 +309,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' '--label=openresty.basic-auth=testuser:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' '--label=openresty.basic-auth=testuser:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -345,7 +345,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' '--label=openresty.basic-auth=testuser:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=' --label=openresty.access-satisfy=any --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' '--label=openresty.basic-auth=testuser:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=' --label=openresty.access-satisfy=any --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -381,7 +381,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' --label=openresty.allowed-ips-source=x-forwarded-for --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' --label=openresty.allowed-ips-source=x-forwarded-for --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -417,7 +417,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' --label=openresty.allowed-ips-source=x-real-ip --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' --label=openresty.allowed-ips-source=x-real-ip --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -453,7 +453,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' --label=openresty.allowed-ips-source=x-forwarded-for '--label=openresty.basic-auth=testuser:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=' --label=openresty.access-satisfy=any --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 '--label=openresty.allowed-ips=10.0.0.0/8 192.168.1.100' --label=openresty.allowed-ips-source=x-forwarded-for '--label=openresty.basic-auth=testuser:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=' --label=openresty.access-satisfy=any --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -489,12 +489,12 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file-2 --platform linux/amd64 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=:5001
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -531,12 +531,12 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file-2 --platform linux/amd64 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=openresty.route.0.strip-prefix=true --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=openresty.route.0.strip-prefix=true --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=:5001
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -573,12 +573,12 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker run --rm -d --cidfile /tmp/cid-file-2 --platform linux/amd64 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=openresty.route.1.path-prefix=/internal --label=openresty.route.1.port=5001 --label=openresty.route.1.strip-prefix=true --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=openresty.route.1.path-prefix=/internal --label=openresty.route.1.port=5001 --label=openresty.route.1.strip-prefix=true --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=:5001
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -632,12 +632,12 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  run docker run --rm --cidfile /tmp/cid-file --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
 
-  run docker run --rm --cidfile /tmp/cid-file-2 --platform linux/amd64 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" -d dokku/python-sample /start web
+  run docker run --rm --cidfile /tmp/cid-file-2 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" -d traefik/whoami -port=:5001
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -661,6 +661,151 @@ teardown() {
   echo "status: $status"
   assert_success
   assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_WEB/$IP_ADDRESS_WEB/" -e "s/VAR_IP_ADDRESS_API/$IP_ADDRESS_API/" fixtures/https-route.cert.tmpl)"
+}
+
+@test "[curl] http route hits api upstream on prefix match" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -p 1080:80 -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --hostname web-upstream --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --hostname api-upstream --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=:5001
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 5
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run curl -sS -H "Host: python.example.com" http://127.0.0.1:1080/api/v0/users
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "Hostname: api-upstream"
+  assert_output_contains "GET /api/v0/users HTTP/1.1"
+}
+
+@test "[curl] http route falls through to web on no prefix match" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -p 1080:80 -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --hostname web-upstream --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --hostname api-upstream --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=:5001
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 5
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run curl -sS -H "Host: python.example.com" http://127.0.0.1:1080/anything-else
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "Hostname: web-upstream"
+  assert_output_contains "GET /anything-else HTTP/1.1"
+}
+
+@test "[curl] http route strip-prefix strips matched prefix" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -p 1080:80 -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --hostname web-upstream --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --hostname api-upstream --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=openresty.route.0.strip-prefix=true --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=:5001
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 5
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run curl -sS -H "Host: python.example.com" http://127.0.0.1:1080/api/v0/users
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "Hostname: api-upstream"
+  assert_output_contains "GET /users HTTP/1.1"
+}
+
+@test "[curl] http route forwards websocket upgrade headers to upstream" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -p 1080:80 -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --hostname web-upstream --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --hostname api-upstream --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=:5001
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 5
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run curl -sS -H "Host: python.example.com" -H "Upgrade: websocket" -H "Connection: Upgrade" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" -H "Sec-WebSocket-Version: 13" http://127.0.0.1:1080/api/v0/socket
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "Hostname: api-upstream"
+  assert_output_contains "Upgrade: websocket"
+  assert_output_contains "Connection: Upgrade"
 }
 
 @test "[unit] basic-auth lua module" {
@@ -714,7 +859,7 @@ teardown() {
 
   DATA="$(cat fixtures/includes/v1.conf | base64)"
 
-  run docker run --rm -d --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 "--label=openresty.include-http-v1.conf=$DATA" --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" dokku/python-sample /start web
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 "--label=openresty.include-http-v1.conf=$DATA" --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -767,7 +912,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  run docker run --rm --cidfile /tmp/cid-file --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -803,7 +948,7 @@ teardown() {
   echo "status: $status"
   assert_success
 
-  run docker run --rm --cidfile /tmp/cid-file --platform linux/amd64 --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=openresty.letsencrypt=true --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d dokku/python-sample /start web
+  run docker run --rm --cidfile /tmp/cid-file --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=openresty.letsencrypt=true --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
@@ -827,7 +972,7 @@ teardown() {
   assert_success
   assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/https.letsencrypt.tmpl)"
 
-  run docker run --rm --cidfile /tmp/cid-file-2 --platform linux/amd64 '--label=openresty.domains=python2.example.com _' '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=openresty.letsencrypt=true --label=com.dokku.app-name=python2 --label=com.dokku.process-type=web --name "${TEST_CONTAINER_NAME}_2" -d dokku/python-sample /start web
+  run docker run --rm --cidfile /tmp/cid-file-2 '--label=openresty.domains=python2.example.com _' '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=openresty.letsencrypt=true --label=com.dokku.app-name=python2 --label=com.dokku.process-type=web --name "${TEST_CONTAINER_NAME}_2" -d traefik/whoami -port=:5000
   echo "output: $output"
   echo "status: $status"
   assert_success
