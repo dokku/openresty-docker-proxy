@@ -273,7 +273,7 @@ The upstream port on the non-`web` container that requests matching `openresty.r
 
 > default: `false`
 
-When `true`, the matched `path-prefix` is stripped from the request before it is forwarded upstream (nginx renders `proxy_pass http://<upstream>/;` with a trailing slash). Use this when the upstream process is written assuming it is mounted at root (so it sees `/users/42` instead of `/api/v0/users/42`). When `false` or unset, the upstream sees the full original request path.
+When `true`, the matched `path-prefix` is stripped from the request before it is forwarded upstream. The sidecar renders an explicit `rewrite ^<path-prefix>/?(.*)$ /$1 break;` ahead of `proxy_pass` so the upstream sees `/users/42` instead of `/api/v0/users/42`. The rewrite form is used in place of the trailing-slash `proxy_pass http://<upstream>/;` style because that earlier style produced a `//` upstream URI which Go's `net/http` answers with a 301 redirect. When `false` or unset, the upstream sees the full original request path.
 
 #### `openresty.send-timeout`
 

@@ -14,6 +14,10 @@ setup() {
     docker container rm -f "$(cat /tmp/cid-file-2)" || true
     rm /tmp/cid-file-2
   fi
+  if [[ -f "/tmp/cid-file-3" ]]; then
+    docker container rm -f "$(cat /tmp/cid-file-3)" || true
+    rm /tmp/cid-file-3
+  fi
 }
 
 teardown() {
@@ -26,6 +30,10 @@ teardown() {
   if [[ -f "/tmp/cid-file-2" ]]; then
     docker container rm -f "$(cat /tmp/cid-file-2)" || true
     rm /tmp/cid-file-2
+  fi
+  if [[ -f "/tmp/cid-file-3" ]]; then
+    docker container rm -f "$(cat /tmp/cid-file-3)" || true
+    rm /tmp/cid-file-3
   fi
 }
 
@@ -602,6 +610,65 @@ teardown() {
   echo "status: $status"
   assert_success
   assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_WEB/$IP_ADDRESS_WEB/" -e "s/VAR_IP_ADDRESS_API/$IP_ADDRESS_API/" fixtures/http-route-multiple.tmpl)"
+}
+
+@test "[start] http route strip-prefix label flip on recreated container" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  # Start the original api container WITHOUT --rm so it lingers as `exited`
+  # after we stop it. This mirrors dokku's scheduler-deploy retire flow.
+  run docker run -d --cidfile /tmp/cid-file-2 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=5001
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker container stop "$(cat /tmp/cid-file-2)"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  # Start the replacement api container with the strip-prefix label added.
+  # The previous container still exists in `docker ps -a` (exited) until the
+  # teardown removes it, exactly as it would during a dokku rolling deploy.
+  run docker run -d --cidfile /tmp/cid-file-3 --label=openresty.port-mapping=http:80:5001 --label=openresty.route.0.path-prefix=/api/v0 --label=openresty.route.0.port=5001 --label=openresty.route.0.strip-prefix=true --label=com.dokku.app-name=python --label=com.dokku.process-type=api --name "${TEST_CONTAINER_NAME}_3" traefik/whoami -port=5001
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS_WEB="$(get_container_ip "$TEST_CONTAINER_NAME")"
+  IP_ADDRESS_API="$(get_container_ip "${TEST_CONTAINER_NAME}_3")"
+  run echo "web=$IP_ADDRESS_WEB api=$IP_ADDRESS_API"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_WEB/$IP_ADDRESS_WEB/" -e "s/VAR_IP_ADDRESS_API/$IP_ADDRESS_API/" fixtures/http-route-strip-prefix.tmpl)"
 }
 
 @test "[start] https cert route" {
