@@ -15,7 +15,7 @@
 # default_pagesize: {{ env "OPENRESTY_OS_PAGESIZE" }}
 {{ end }}
 
-{{ range $app, $appContainers := groupByLabel $ $app_label }}
+{{ range $app, $appContainers := groupByLabel (where $ "State.Running" true) $app_label }}
 
 {{ $all_app_containers := dict }}
 {{ range $process_type, $containers := groupByLabel $appContainers $process_label }}
