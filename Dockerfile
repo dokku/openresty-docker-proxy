@@ -83,6 +83,7 @@ RUN apt-get update && \
 COPY config/allow_domain.lua /etc/nginx/lua/allow_domain.lua
 COPY config/allowed_ips.lua /etc/nginx/lua/allowed_ips.lua
 COPY config/basic_auth.lua /etc/nginx/lua/basic_auth.lua
+COPY config/upstream_healthchecks.lua /etc/nginx/lua/upstream_healthchecks.lua
 COPY config/test_allowed_ips.lua /etc/nginx/lua/test_allowed_ips.lua
 COPY config/test_basic_auth.lua /etc/nginx/lua/test_basic_auth.lua
 COPY config/logrotate /etc/logrotate.d/openresty
