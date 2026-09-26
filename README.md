@@ -240,6 +240,10 @@ Sets the size of the buffer proxy_busy_buffer_size used for reading the first pa
 
 Defines a timeout for connect to a proxied server.
 
+#### `openresty.proxy-next-upstream-timeout`
+
+Limits the time during which a failed request can be passed to the next upstream server via `proxy_next_upstream_timeout`. Read from the first `web` container and applied to every `location` block for the app. Unset by default, which leaves the nginx default of no limit.
+
 #### `openresty.proxy-read-timeout`
 
 Defines a timeout for reading a response from the proxied server.
@@ -278,6 +282,25 @@ When `true`, the matched `path-prefix` is stripped from the request before it is
 #### `openresty.send-timeout`
 
 Defines a timeout for sending a response to the client.
+
+#### `openresty.upstream-fail-timeout`
+
+Sets `fail_timeout` on the container's `server` line in its upstream. This is both the window in which failed attempts are counted and the time the server is considered unavailable once `max_fails` is reached. Read from each container individually. Unset by default, which leaves the nginx default of `10s`.
+
+#### `openresty.upstream-max-fails`
+
+Sets `max_fails` on the container's `server` line in its upstream. This is the number of unsuccessful attempts within `fail_timeout` after which the server is considered unavailable. Read from each container individually. Unset by default, which leaves the nginx default of `1`.
+
+Example usage:
+
+```bash
+docker run --label=openresty.upstream-max-fails=1 \
+           --label=openresty.upstream-fail-timeout=5s \
+           --label=openresty.proxy-next-upstream-timeout=5s \
+           --label=com.dokku.app-name=myapp \
+           --label=com.dokku.process-type=web \
+           myimage
+```
 
 #### `openresty.x-forwarded-for-value`
 

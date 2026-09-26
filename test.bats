@@ -234,6 +234,42 @@ teardown() {
   assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/http.tmpl)"
 }
 
+@test "[start] http upstream failover" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=openresty.upstream-max-fails=1 --label=openresty.upstream-fail-timeout=5s --label=openresty.proxy-next-upstream-timeout=5s --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS="$(get_container_ip "$TEST_CONTAINER_NAME")"
+  run echo "$IP_ADDRESS"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/http-upstream-failover.tmpl)"
+}
+
 @test "[start] http basic-auth" {
   run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
@@ -1057,6 +1093,43 @@ teardown() {
   echo "status: $status"
   assert_success
   assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_1/$IP_ADDRESS/" -e "s/VAR_IP_ADDRESS_2/$IP_ADDRESS_2/" fixtures/https.letsencrypt-no-default.tmpl)"
+}
+
+@test "[curl] http upstream failover skips a container that is not listening" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -p 1080:80 -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --hostname web-upstream --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=openresty.upstream-max-fails=1 --label=openresty.upstream-fail-timeout=5s --label=openresty.proxy-next-upstream-timeout=5s --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --hostname booting-upstream --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=openresty.upstream-max-fails=1 --label=openresty.upstream-fail-timeout=5s --label=openresty.proxy-next-upstream-timeout=5s --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=5999
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 5
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  for _ in 1 2 3 4 5 6; do
+    run curl -sS --fail -H "Host: python.example.com" http://127.0.0.1:1080/
+    echo "output: $output"
+    echo "status: $status"
+    assert_success
+    assert_output_contains "Hostname: web-upstream"
+  done
 }
 
 get_container_ip() {
