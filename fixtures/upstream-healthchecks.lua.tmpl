@@ -1,0 +1,18 @@
+module('upstream_healthchecks', package.seeall)
+-- checks lists the active healthchecks to run against app upstreams, one entry per upstream
+local checks = {
+    {
+        upstream = [===[python-web-5000]===],
+        path = [===[/healthz]===],
+        scheme = [===[http]===],
+        host = [===[python.example.com]===],
+        port = 0,
+        timeout = 2,
+        interval = 1,
+        fall = 1,
+        rise = 0,
+        headers = {
+            { [===[X-Check]===], [===[dokku]===] },
+        },
+    },
+}

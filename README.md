@@ -188,6 +188,74 @@ A space-delimited set of domains to proxy.
 
 The path - in the container - where the error logs will be written.
 
+#### `openresty.healthcheck-path`
+
+Enables active healthchecks for the app's `web` upstreams via [lua-resty-upstream-healthcheck](https://github.com/openresty/lua-resty-upstream-healthcheck). A `GET` request is periodically sent to this path on every container in each `http` and `https` upstream, and containers that fail the check are taken out of rotation until they pass again. Responses with a `2xx` or `3xx` status are considered healthy. The path must start with a `/` and must not contain whitespace or control characters. Read from the first `web` container.
+
+Containers are considered healthy until they fail a check, and healthcheck state is reset whenever the configuration is reloaded. Combine with `openresty.upstream-max-fails` and `openresty.upstream-fail-timeout` to also take a container out of rotation as soon as a request to it fails.
+
+The status of all checked upstreams can be viewed from within the container:
+
+```bash
+wget -qO- http://127.0.0.1:8999/upstream-healthcheck-status
+```
+
+Example usage:
+
+```bash
+docker run --label=openresty.healthcheck-path=/health \
+           --label=openresty.healthcheck-interval=5 \
+           --label=openresty.healthcheck-timeout=5 \
+           --label=openresty.healthcheck-fall=3 \
+           --label=openresty.healthcheck-host=myapp.example.com \
+           --label=openresty.healthcheck-header.X-Healthcheck=true \
+           --label=com.dokku.app-name=myapp \
+           --label=com.dokku.process-type=web \
+           myimage
+```
+
+#### `openresty.healthcheck-fall`
+
+> default: `3`
+
+Number of successive failed checks before a container is taken out of rotation.
+
+#### `openresty.healthcheck-header.<name>`
+
+Adds the `<name>` header with the label's value to healthcheck requests. Headers with invalid names or values containing control characters cause the healthcheck to be skipped.
+
+#### `openresty.healthcheck-host`
+
+The `Host` header sent with healthcheck requests. Also used as the SNI hostname when `openresty.healthcheck-scheme` is `https`. Unset by default, in which case no `Host` header is sent.
+
+#### `openresty.healthcheck-interval`
+
+> default: `5`
+
+Number of seconds between healthchecks.
+
+#### `openresty.healthcheck-port`
+
+The container port to send healthchecks to. Defaults to the port of the upstream being checked.
+
+#### `openresty.healthcheck-rise`
+
+> default: `2`
+
+Number of successive successful checks before a container that was taken out of rotation is put back.
+
+#### `openresty.healthcheck-scheme`
+
+> default: `http`
+
+The scheme used for healthchecks, either `http` or `https`. Certificates are not verified.
+
+#### `openresty.healthcheck-timeout`
+
+> default: `5`
+
+Number of seconds before a healthcheck times out.
+
 #### `openresty.https-port`
 
 Port treated as https when parsing port mappings.

@@ -270,6 +270,41 @@ teardown() {
   assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/http-upstream-failover.tmpl)"
 }
 
+@test "[start] http upstream healthcheck" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=openresty.healthcheck-path=/healthz --label=openresty.healthcheck-host=python.example.com --label=openresty.healthcheck-timeout=2 --label=openresty.healthcheck-interval=1 --label=openresty.healthcheck-fall=1 --label=openresty.healthcheck-header.X-Check=dokku --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 8
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker exec openresty-docker-proxy sed -n '1,/^}$/p' /etc/nginx/lua/upstream_healthchecks.lua
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(cat fixtures/upstream-healthchecks.lua.tmpl)"
+
+  run docker exec openresty-docker-proxy /usr/local/openresty/nginx/sbin/nginx -t -c /etc/nginx/nginx.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+}
+
 @test "[start] http basic-auth" {
   run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
@@ -1122,6 +1157,54 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
+
+  for _ in 1 2 3 4 5 6; do
+    run curl -sS --fail -H "Host: python.example.com" http://127.0.0.1:1080/
+    echo "output: $output"
+    echo "status: $status"
+    assert_success
+    assert_output_contains "Hostname: web-upstream"
+  done
+}
+
+@test "[curl] http upstream healthcheck marks a container that is not listening as down" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -p 1080:80 -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --hostname web-upstream --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=openresty.healthcheck-path=/health --label=openresty.healthcheck-interval=1 --label=openresty.healthcheck-fall=1 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file-2 --hostname booting-upstream --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=openresty.healthcheck-path=/health --label=openresty.healthcheck-interval=1 --label=openresty.healthcheck-fall=1 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "${TEST_CONTAINER_NAME}_2" traefik/whoami -port=5999
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 8
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS="$(get_container_ip "$TEST_CONTAINER_NAME")"
+  IP_ADDRESS_2="$(get_container_ip "${TEST_CONTAINER_NAME}_2")"
+
+  run docker exec openresty-docker-proxy wget -qO- http://127.0.0.1:8999/upstream-healthcheck-status
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "Upstream python-web-5000"
+  assert_output_contains "$IP_ADDRESS:5000 UP"
+  assert_output_contains "$IP_ADDRESS_2:5000 DOWN"
 
   for _ in 1 2 3 4 5 6; do
     run curl -sS --fail -H "Host: python.example.com" http://127.0.0.1:1080/

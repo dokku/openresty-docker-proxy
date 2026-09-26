@@ -1,0 +1,144 @@
+{{ $label_prefix := default "openresty." (env "OPENRESTY_LABEL_PREFIX") }}
+{{- $app_label := default "com.dokku.app-name" (env "OPENRESTY_APP_LABEL") }}
+{{- $process_label := default "com.dokku.process-type" (env "OPENRESTY_PROCESS_LABEL") }}
+{{- $web_process := default "web" (env "OPENRESTY_WEB_PROCESS") }}
+{{- $checked := dict }}
+module('upstream_healthchecks', package.seeall)
+
+-- checks lists the active healthchecks to run against app upstreams, one entry per upstream
+local checks = {
+{{- range $app, $appContainers := groupByLabel (where $ "State.Running" true) $app_label }}
+{{- range $process_type, $containers := groupByLabel $appContainers $process_label }}
+{{- if eq $process_type $web_process }}
+{{- $first_container := index $containers 0 }}
+{{- $path := when (contains $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-path")) (index $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-path")) "" }}
+{{- if and $path (not (regexMatch "]===]" $path)) }}
+{{- $scheme := when (contains $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-scheme")) (index $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-scheme")) "http" }}
+{{- $host := when (contains $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-host")) (index $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-host")) "" }}
+{{- $port := atoi (when (contains $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-port")) (index $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-port")) "0") }}
+{{- $timeout := atoi (when (contains $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-timeout")) (index $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-timeout")) "0") }}
+{{- $interval := atoi (when (contains $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-interval")) (index $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-interval")) "0") }}
+{{- $fall := atoi (when (contains $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-fall")) (index $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-fall")) "0") }}
+{{- $rise := atoi (when (contains $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-rise")) (index $first_container.Labels (printf "%s%s" $label_prefix "healthcheck-rise")) "0") }}
+{{- $port_mappings := split (trim (when (contains $first_container.Labels (printf "%s%s" $label_prefix "port-mapping")) (index $first_container.Labels (printf "%s%s" $label_prefix "port-mapping")) "http:80:5000")) " " }}
+{{- range $_, $port_map := $port_mappings }}
+{{- $map_scheme := index (split $port_map ":") 0 }}
+{{- if or (eq $map_scheme "http") (eq $map_scheme "https") }}
+{{- $upstream_name := printf "%s-%s-%s" $app $process_type (index (split $port_map ":") 2) }}
+{{- if not (contains $checked $upstream_name) }}
+{{- $_ := set $checked $upstream_name true }}
+    {
+        upstream = [===[{{ $upstream_name }}]===],
+        path = [===[{{ $path }}]===],
+        scheme = [===[{{ $scheme }}]===],
+        host = [===[{{ if not (regexMatch "]===]" $host) }}{{ $host }}{{ end }}]===],
+        port = {{ $port }},
+        timeout = {{ $timeout }},
+        interval = {{ $interval }},
+        fall = {{ $fall }},
+        rise = {{ $rise }},
+        headers = {
+{{- range $label, $value := $first_container.Labels }}
+{{- if and (hasPrefix (printf "%shealthcheck-header." $label_prefix) $label) (not (regexMatch "]===]" $label)) (not (regexMatch "]===]" $value)) }}
+            { [===[{{ trimPrefix (printf "%shealthcheck-header." $label_prefix) $label }}]===], [===[{{ $value }}]===] },
+{{- end }}
+{{- end }}
+        },
+    },
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+}
+
+-- is_valid_path returns true if the path is absolute and free of whitespace and control characters
+local function is_valid_path(path)
+    return string.sub(path, 1, 1) == "/" and not string.find(path, "[%s%c]")
+end
+
+-- is_valid_header returns true if the header name is a token and the value contains no control characters
+local function is_valid_header(name, value)
+    return string.find(name, "^[%w!#$%%&'*+.^_`|~-]+$") ~= nil and not string.find(value, "%c")
+end
+
+-- positive_or returns the value if it is a positive number, otherwise the fallback
+local function positive_or(value, fallback)
+    if value and value > 0 then
+        return value
+    end
+    return fallback
+end
+
+-- build_request returns the raw http request used to check an upstream
+local function build_request(check)
+    local lines = { "GET " .. check.path .. " HTTP/1.0" }
+    if check.host ~= "" then
+        table.insert(lines, "Host: " .. check.host)
+    end
+    for _, header in ipairs(check.headers) do
+        table.insert(lines, header[1] .. ": " .. header[2])
+    end
+    return table.concat(lines, "\r\n") .. "\r\n\r\n"
+end
+
+-- spawn starts an active healthchecker for each configured upstream
+function spawn()
+    local hc = require "resty.upstream.healthcheck"
+    local statuses = {}
+    for status = 200, 399 do
+        table.insert(statuses, status)
+    end
+
+    for _, check in ipairs(checks) do
+        local valid = is_valid_path(check.path)
+        if check.host ~= "" and not is_valid_header("Host", check.host) then
+            valid = false
+        end
+        for _, header in ipairs(check.headers) do
+            if not is_valid_header(header[1], header[2]) then
+                valid = false
+            end
+        end
+
+        if not valid then
+            ngx.log(ngx.ERR, "skipping invalid healthcheck for upstream ", check.upstream)
+        else
+            local typ = "http"
+            if string.lower(check.scheme) == "https" then
+                typ = "https"
+            end
+
+            local port = nil
+            if check.port > 0 then
+                port = check.port
+            end
+
+            local host = nil
+            if check.host ~= "" then
+                host = check.host
+            end
+
+            local ok, err = hc.spawn_checker{
+                shm = "upstream_healthcheck",
+                upstream = check.upstream,
+                type = typ,
+                http_req = build_request(check),
+                port = port,
+                interval = positive_or(check.interval, 5) * 1000,
+                timeout = positive_or(check.timeout, 5) * 1000,
+                fall = positive_or(check.fall, 3),
+                rise = positive_or(check.rise, 2),
+                valid_statuses = statuses,
+                concurrency = 10,
+                ssl_verify = false,
+                host = host,
+            }
+            if not ok then
+                ngx.log(ngx.ERR, "failed to spawn healthcheck for upstream ", check.upstream, ": ", err)
+            end
+        end
+    end
+end

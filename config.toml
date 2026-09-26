@@ -32,3 +32,10 @@ dest = "/etc/nginx/lua/allow_domain.lua"
 watch = true
 wait = "500ms:2s"
 notifycmd = "/etc/init.d/openresty reload"
+
+[[config]]
+template = "/app/templates/upstream_healthchecks.lua.tmpl"
+dest = "/etc/nginx/lua/upstream_healthchecks.lua"
+watch = true
+wait = "500ms:2s"
+notifycmd = "/etc/init.d/openresty reload"
