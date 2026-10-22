@@ -155,6 +155,8 @@ teardown() {
   echo "status: $status"
   assert_success
 
+  wait_for_file_contents openresty-docker-proxy /etc/nginx/sites-enabled/sites.conf "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/grpcs.cert.tmpl)" || true
+
   run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
@@ -735,6 +737,8 @@ teardown() {
   echo "status: $status"
   assert_success
 
+  wait_for_file_contents openresty-docker-proxy /etc/nginx/sites-enabled/sites.conf "$(sed -e "s/VAR_IP_ADDRESS_WEB/$IP_ADDRESS_WEB/" -e "s/VAR_IP_ADDRESS_API/$IP_ADDRESS_API/" fixtures/http-route-strip-prefix.tmpl)" || true
+
   run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
@@ -793,6 +797,8 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
+
+  wait_for_file_contents openresty-docker-proxy /etc/nginx/sites-enabled/sites.conf "$(sed -e "s/VAR_IP_ADDRESS_WEB/$IP_ADDRESS_WEB/" -e "s/VAR_IP_ADDRESS_API/$IP_ADDRESS_API/" fixtures/https-route.cert.tmpl)" || true
 
   run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
@@ -1068,6 +1074,8 @@ teardown() {
   echo "status: $status"
   assert_success
 
+  wait_for_file_contents openresty-docker-proxy /etc/nginx/sites-enabled/sites.conf "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/https.cert.tmpl)" || true
+
   run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
   echo "status: $status"
@@ -1122,6 +1130,8 @@ teardown() {
   echo "output: $output"
   echo "status: $status"
   assert_success
+
+  wait_for_file_contents openresty-docker-proxy /etc/nginx/sites-enabled/sites.conf "$(sed -e "s/VAR_IP_ADDRESS_1/$IP_ADDRESS/" -e "s/VAR_IP_ADDRESS_2/$IP_ADDRESS_2/" fixtures/https.letsencrypt-no-default.tmpl)" || true
 
   run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
   echo "output: $output"
@@ -1223,6 +1233,19 @@ get_container_ip() {
     network="${OPENRESTY_DEFAULT_NETWORK:-bridge}"
   fi
   docker container inspect --format="{{(index .NetworkSettings.Networks \"$network\").IPAddress}}" "$container"
+}
+
+# Polls a file in a container until its contents match, or the timeout (in seconds) passes
+wait_for_file_contents() {
+  local container="$1" file="$2" expected="$3" timeout="${4:-20}"
+  local i
+  for ((i = 0; i < timeout; i++)); do
+    if [[ "$(docker exec "$container" cat "$file" | tr -d '\r')" == "$expected" ]]; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
 }
 
 assert_equal() {
