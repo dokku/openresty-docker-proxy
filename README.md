@@ -320,6 +320,42 @@ Defines a timeout for reading a response from the proxied server.
 
 Defines a timeout for sending a request to the proxied server.
 
+#### `openresty.redirect.<n>.source`
+
+Declares a hostname on a `web` container that should redirect to another hostname. Combined with `openresty.redirect.<n>.destination` (required), `openresty.redirect.<n>.code` (optional), and `openresty.redirect.<n>.tls` (optional). `<n>` is an index that disambiguates multiple redirects on the same container.
+
+For each labeled redirect, the sidecar emits a `server { }` block per `http` port mapping, and per `https` port mapping when SSL is enabled for the app, with `server_name <source>`. The block answers every request with `return <code> $scheme://<destination>$request_uri;`, so the request path and query string are kept. The source should not also be listed in `openresty.domains`. On port 80, the block keeps the `/.well-known/acme-challenge/` location when `openresty.letsencrypt` is enabled so a certificate can be issued for the source, and it includes any `openresty.include-http-*` snippets.
+
+Example usage:
+
+```bash
+docker run --label=openresty.domains=example.com \
+           --label=openresty.redirect.0.source=www.example.com \
+           --label=openresty.redirect.0.destination=example.com \
+           --label=openresty.redirect.1.source=example.org \
+           --label=openresty.redirect.1.destination=example.com \
+           --label=openresty.redirect.1.code=302 \
+           --label=com.dokku.app-name=myapp \
+           --label=com.dokku.process-type=web \
+           myimage
+```
+
+#### `openresty.redirect.<n>.code`
+
+> default: `301`
+
+The http status code used for the redirect.
+
+#### `openresty.redirect.<n>.destination`
+
+The hostname that requests for `openresty.redirect.<n>.source` are redirected to. Required when a `source` is set; the redirect is skipped if this label is absent.
+
+#### `openresty.redirect.<n>.tls`
+
+> default: `true`
+
+When `false`, no `https` server block is rendered for the redirect source while the app uses an imported certificate, as that certificate does not cover the source. Ignored when `openresty.letsencrypt` is enabled, since certificates are then issued per hostname.
+
 #### `openresty.route.<n>.path-prefix`
 
 Declares a path prefix on a non-`web` container that should be routed to that container instead of falling through to the web upstream. Combined with `openresty.route.<n>.port` (required) and `openresty.route.<n>.strip-prefix` (optional), this lets a single hostname fan requests out to multiple Procfile processes. `<n>` is a numeric index that disambiguates multiple routes on the same container; nginx longest-prefix-match handles ordering, so the index only needs to be stable, not specific.

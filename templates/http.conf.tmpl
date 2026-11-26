@@ -116,6 +116,14 @@ upstream {{ $upstream_name }} {
     {{ end }}
 {{ end }}
 
+{{ range $label, $redirect_source := $first_container.Labels }}
+{{ if and (hasPrefix (printf "%sredirect." $label_prefix) $label) (hasSuffix ".source" $label) }}
+{{ if ne (trim $redirect_source) "" }}
+{{ $_ := set $all_domains $redirect_source $redirect_source }}
+{{ end }}
+{{ end }}
+{{ end }}
+
 {{ $port_mappings := split (trim (when (contains $first_container.Labels (printf "%s%s" $label_prefix "port-mapping")) (index $first_container.Labels (printf "%s%s" $label_prefix "port-mapping")) "http:80:5000")) " " }}
 {{ range $_, $port_map := $port_mappings  }}
 {{ $scheme := index (split $port_map ":") 0 }}
@@ -326,6 +334,66 @@ server {
 
     {{ end }}
 }
+
+{{ range $label, $redirect_source := $first_container.Labels }}
+{{ if and (hasPrefix (printf "%sredirect." $label_prefix) $label) (hasSuffix ".source" $label) }}
+{{ $redirect_index := trimSuffix ".source" (trimPrefix (printf "%sredirect." $label_prefix) $label) }}
+{{ $destination_label := printf "%sredirect.%s.destination" $label_prefix $redirect_index }}
+{{ $code_label := printf "%sredirect.%s.code" $label_prefix $redirect_index }}
+{{ $tls_label := printf "%sredirect.%s.tls" $label_prefix $redirect_index }}
+{{ if and (ne (trim $redirect_source) "") (contains $first_container.Labels $destination_label) }}
+{{ $redirect_destination := index $first_container.Labels $destination_label }}
+{{ $redirect_code := when (contains $first_container.Labels $code_label) (index $first_container.Labels $code_label) "301" }}
+{{ $redirect_tls := when (contains $first_container.Labels $tls_label) (index $first_container.Labels $tls_label) "true" }}
+{{ $redirect_https := and (eq $scheme "https") $openresty_ssl_enabled (or $openresty_letsencrypt_enabled (ne $redirect_tls "false")) }}
+{{ if or (eq $scheme "http") $redirect_https }}
+server {
+    listen                      [{{ $openresty_bind_address_ipv6 }}]:{{ $host_port }}{{ if $redirect_https }} ssl http2{{ end }};
+    listen                      {{ if $openresty_bind_address_ipv4 }}{{ $openresty_bind_address_ipv4 }}:{{ end }}{{ $host_port }}{{ if $redirect_https }} ssl http2{{ end }};
+    server_name                 {{ $redirect_source }};
+    access_log                  {{ $openresty_access_log_path }}{{ if and ($openresty_access_log_format) (ne $openresty_access_log_path "off") }} {{ $openresty_access_log_format }}{{ end }};
+    error_log                   {{ $openresty_error_log_path }};
+
+    {{ if $redirect_https }}
+    {{ if $openresty_has_cert }}
+    ssl_certificate             /etc/nginx/ssl/{{ $app }}-server.crt;
+    ssl_certificate_key         /etc/nginx/ssl/{{ $app }}-server.key;
+    {{ else if $openresty_letsencrypt_enabled }}
+    ssl_certificate_by_lua_block {
+        auto_ssl:ssl_certificate()
+    }
+    # fallback certificates
+    ssl_certificate             /etc/ssl/resty-auto-ssl-fallback.crt;
+    ssl_certificate_key         /etc/ssl/resty-auto-ssl-fallback.key;
+    {{ end }}
+    ssl_protocols               TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers   off;
+    keepalive_timeout           70;
+    {{ end }}
+
+    {{ if and (eq $host_port "80") (has (printf "https:%s:%s" $openresty_https_port $container_port) $port_mappings) ($openresty_letsencrypt_enabled) }}
+    location ^~ /.well-known/acme-challenge/ {
+        content_by_lua_block {
+            auto_ssl:challenge_server()
+        }
+    }
+    {{ end }}
+
+    {{ range $include_label, $base64Value := $first_container.Labels }}
+    {{ if hasPrefix (printf "%s%s" $label_prefix "include-http-") $include_label }}
+    # {{ trimPrefix (printf "%s%s" $label_prefix "include-http-") $include_label }}
+{{ indent 4 (b64dec $base64Value) }}
+    {{ end }}
+    {{ end }}
+
+    location / {
+        return {{ $redirect_code }} $scheme://{{ $redirect_destination }}$request_uri;
+    }
+}
+{{ end }}{{/* endif redirect scheme */}}
+{{ end }}{{/* endif redirect destination label */}}
+{{ end }}{{/* endif redirect source label */}}
+{{ end }}{{/* endrange labels for redirects */}}
 {{ else if or (and (eq $scheme "grpcs") $openresty_ssl_enabled) (eq $scheme "grpc") }}
 server {
     listen                      [{{ $openresty_bind_address_ipv6 }}]:{{ $host_port }}{{ if eq $scheme "grpcs" }} ssl{{ end }} http2;
