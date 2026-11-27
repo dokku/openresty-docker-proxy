@@ -45,7 +45,7 @@ RUN apt-get update && \
     (if [ "$(dpkg --print-architecture)" = "arm64" ]; then echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/arm64/ubuntu jammy main" > /etc/apt/sources.list.d/openresty.list; fi) && \
     cat /etc/apt/sources.list.d/openresty.list && \
     apt-get update && \
-    apt-get install -y --no-install-recommends openresty=${OPENRESTY_VERSION} openresty-opm=${OPENRESTY_VERSION} && \
+    apt-get install -y --no-install-recommends openresty=${OPENRESTY_VERSION} openresty-opm=${OPENRESTY_VERSION} openresty-resty=${OPENRESTY_VERSION} && \
     cd /tmp && \
     luarocks unpack lua-resty-auto-ssl ${LUA_RESTY_AUTO_SSL_VERSION} && \
     cd lua-resty-auto-ssl-${LUA_RESTY_AUTO_SSL_VERSION}/lua-resty-auto-ssl && \

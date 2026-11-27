@@ -1140,6 +1140,169 @@ teardown() {
   assert_output_cr "$(sed -e "s/VAR_IP_ADDRESS_1/$IP_ADDRESS/" -e "s/VAR_IP_ADDRESS_2/$IP_ADDRESS_2/" fixtures/https.letsencrypt-no-default.tmpl)"
 }
 
+@test "[start] http redirect" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=openresty.redirect.0.source=www.example.com --label=openresty.redirect.0.destination=python.example.com --label=openresty.redirect.1.source=old.example.com --label=openresty.redirect.1.destination=python.example.com --label=openresty.redirect.1.code=302 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS="$(get_container_ip "$TEST_CONTAINER_NAME")"
+  run echo "$IP_ADDRESS"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  wait_for_file_contents openresty-docker-proxy /etc/nginx/sites-enabled/sites.conf "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/http-redirect.tmpl)" || true
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/http-redirect.tmpl)"
+}
+
+@test "[start] https redirect cert" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker container exec openresty-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.key /etc/nginx/ssl/python-server.key
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container exec openresty-docker-proxy cp /etc/ssl/resty-auto-ssl-fallback.crt /etc/nginx/ssl/python-server.crt
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm --cidfile /tmp/cid-file --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=openresty.redirect.0.source=www.example.com --label=openresty.redirect.0.destination=python.example.com --label=openresty.redirect.1.source=uncovered.example.com --label=openresty.redirect.1.destination=python.example.com --label=openresty.redirect.1.tls=false --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d traefik/whoami -port=5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS="$(get_container_ip "$TEST_CONTAINER_NAME")"
+  run echo "$IP_ADDRESS"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  wait_for_file_contents openresty-docker-proxy /etc/nginx/sites-enabled/sites.conf "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/https-redirect.cert.tmpl)" || true
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/https-redirect.cert.tmpl)"
+}
+
+@test "[start] https redirect letsencrypt" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm --cidfile /tmp/cid-file --label=openresty.domains=python.example.com '--label=openresty.port-mapping=http:80:5000 https:443:5000' --label=openresty.letsencrypt=true --label=openresty.redirect.0.source=www.example.com --label=openresty.redirect.0.destination=python.example.com --label=openresty.redirect.0.tls=false --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" -d traefik/whoami -port=5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 3
+
+  run docker logs openresty-docker-proxy
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  IP_ADDRESS="$(get_container_ip "$TEST_CONTAINER_NAME")"
+  run echo "$IP_ADDRESS"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  wait_for_file_contents openresty-docker-proxy /etc/nginx/sites-enabled/sites.conf "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/https-redirect.letsencrypt.tmpl)" || true
+
+  run docker exec openresty-docker-proxy cat /etc/nginx/sites-enabled/sites.conf
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_cr "$(sed "s/VAR_IP_ADDRESS/$IP_ADDRESS/" fixtures/https-redirect.letsencrypt.tmpl)"
+}
+
+@test "[curl] http redirect preserves the request uri and code" {
+  run docker image build -t openresty-docker-proxy:latest .
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker container run -d -p 1080:80 -v /var/run/docker.sock:/var/run/docker.sock --name openresty-docker-proxy openresty-docker-proxy:latest
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  run docker run --rm -d --cidfile /tmp/cid-file --label=openresty.domains=python.example.com --label=openresty.port-mapping=http:80:5000 --label=openresty.redirect.0.source=www.example.com --label=openresty.redirect.0.destination=python.example.com --label=openresty.redirect.1.source=old.example.com --label=openresty.redirect.1.destination=python.example.com --label=openresty.redirect.1.code=307 --label=com.dokku.app-name=python --label=com.dokku.process-type=web --name "$TEST_CONTAINER_NAME" traefik/whoami -port=5000
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+
+  sleep 5
+
+  run curl -sS -o /dev/null -w "%{http_code} %{redirect_url}" -H "Host: www.example.com" "http://127.0.0.1:1080/some/path?query=1"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output "301 http://python.example.com/some/path?query=1"
+
+  run curl -sS -o /dev/null -w "%{http_code} %{redirect_url}" -H "Host: old.example.com" "http://127.0.0.1:1080/"
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output "307 http://python.example.com/"
+
+  run curl -sS --fail -H "Host: python.example.com" http://127.0.0.1:1080/
+  echo "output: $output"
+  echo "status: $status"
+  assert_success
+  assert_output_contains "GET / HTTP/1.1"
+}
+
 @test "[curl] http upstream failover skips a container that is not listening" {
   run docker image build -t openresty-docker-proxy:latest .
   echo "output: $output"
